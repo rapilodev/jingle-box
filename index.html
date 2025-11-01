@@ -11,8 +11,6 @@
   --border-radius: 10px;
   --transition: all 0.3s ease;
 }
-
-/* Standard Dark Mode */
 body {
   margin: 0;
   font-family: 'Segoe UI', Roboto, sans-serif;
@@ -23,27 +21,9 @@ body {
   height: 100vh;
   transition: background 0.5s, color 0.5s;
 }
-
-/* Header */
-header {
-  padding: 12px;
-  text-align: center;
-  background: #2a2a2a;
-  color: #f5f5f5;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-  transition: background 0.5s, color 0.5s;
-}
-
-/* Main Area */
-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-  overflow-y: auto;
-}
-
-/* Category Cards */
+header { padding: 12px; text-align: center; background: #2a2a2a; color: #f5f5f5; box-shadow: 0 2px 8px rgba(0,0,0,0.4); transition: background 0.5s, color 0.5s; }
+main { flex: 1; display: flex; flex-direction: column; padding: 16px; overflow-y: auto; }
+footer { padding: 14px; text-align: center; background: #2a2a2a; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 -2px 8px rgba(0,0,0,0.4); transition: background 0.5s, color 0.5s; }
 .category {
   display: flex;
   flex-wrap: wrap;
@@ -58,85 +38,21 @@ main {
 }
 .category:hover { transform: scale(1.01); }
 .category.dragging { opacity: 0.6; border: 2px dashed var(--accent); }
-.category.disabled { opacity: 0.5; pointer-events: none; }
-
-/* Labels & Selects */
-.category label {
-  width: 110px;
-  font-weight: 600;
-  color: #ccc;
-  transition: color 0.5s;
-}
-.category select {
-  flex: 1;
-  padding: 8px;
-  margin-right: 8px;
-  min-width: 180px;
-  font-size: 1em;
-  border-radius: 6px;
-  border: 1px solid #444;
-  background: #1b1b1b;
-  color: #f5f5f5;
-  transition: all 0.3s ease;
-}
+.category.disabled { opacity: 0.5; }
+.category label { width: 110px; font-weight: 600; color: #ccc; transition: color 0.5s; }
+.category select { flex: 1; padding: 8px; margin-right: 8px; min-width: 180px; font-size: 1em; border-radius: 6px; border: 1px solid #444; background: #1b1b1b; color: #f5f5f5; transition: all 0.3s ease; }
 .category select:focus { border-color: var(--accent); outline: none; }
-
-/* Buttons */
-.category button {
-  padding: 8px 14px;
-  margin-right: 6px;
-  margin-top: 4px;
-  font-size: 0.95em;
-  border-radius: 6px;
-  cursor: pointer;
-  border: none;
-  color: #fff;
-  background: var(--accent);
-  transition: all 0.3s ease;
-}
+.category button { padding: 8px 14px; margin-right: 6px; margin-top: 4px; font-size: 0.95em; border-radius: 6px; cursor: pointer; border: none; color: #fff; background: var(--accent); transition: all 0.3s ease; }
 .category button:hover { background: var(--accent-light); transform: translateY(-1px); }
 .category button:active { transform: scale(0.97); }
-
-/* Footer */
-footer {
-  padding: 14px;
-  text-align: center;
-  background: #2a2a2a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.4);
-  transition: background 0.5s, color 0.5s;
-}
-footer button {
-  padding: 10px 24px;
-  font-size: 1.1em;
-  border-radius: 8px;
-  cursor: pointer;
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  transition: all 0.3s ease;
-}
+footer button { padding: 10px 24px; font-size: 1.1em; border-radius: 8px; cursor: pointer; background: var(--accent); color: #fff; border: none; transition: all 0.3s ease; }
 footer button:hover { background: var(--accent-light); }
 footer button:active { transform: scale(0.97); }
-
 #volumeRange { vertical-align: middle; width: 160px; margin-left: 10px; accent-color: var(--accent); cursor: pointer; }
-
-/* Scrollbar */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-/* Responsive */
-@media (max-width: 600px) {
-  .category { flex-direction: column; align-items: flex-start; }
-  .category label { margin-bottom: 6px; }
-  footer { flex-direction: column; gap: 8px; }
-}
-
-/* Light Mode automatisch, wenn System hell ist */
+@media (max-width: 600px) { .category { flex-direction: column; align-items: flex-start; } .category label { margin-bottom: 6px; } footer { flex-direction: column; gap: 8px; } }
 @media (prefers-color-scheme: light) {
   body { background: #f5f5f5; color: #121212; }
   header, footer { background: #e0e0e0; color: #121212; }
@@ -147,12 +63,8 @@ footer button:active { transform: scale(0.97); }
 </style>
 </head>
 <body>
-<header>
-  <h1>FRBB DAB+ Jingles</h1>
-</header>
-
+<header><h1>FRBB DAB+ Jingles</h1></header>
 <main id="categories"></main>
-
 <footer>
   <button id="playBtn">▶ Abspielen</button>
   <button id="stopBtn">⏹ Stop</button>
@@ -164,8 +76,8 @@ footer button:active { transform: scale(0.97); }
 
 <script>
 const defaultCategories = ['uhr','sender','studio','frequenz','sendereihe','spruch','soundbett'];
-const basePath = './milan/';
 let status = {};
+let selectedProfile = null;
 
 window.addEventListener('load', loadContent);
 document.getElementById('playBtn').addEventListener('click', playAudio);
@@ -175,71 +87,222 @@ async function loadContent() {
   try {
     const res = await fetch('content.cgi');
     if (!res.ok) throw new Error('Fehler beim Laden');
-    const profil = (await res.json()).milan;
+    const data = await res.json();
+    const profiles = Object.keys(data);
+    const savedProfile = localStorage.getItem('selectedProfile') || profiles[0];
+    selectedProfile = savedProfile;
+
     const container = document.getElementById('categories');
     container.innerHTML = '';
 
-    const savedOrder = JSON.parse(localStorage.getItem('categoryOrder')) || defaultCategories;
-    const savedStatus = JSON.parse(localStorage.getItem('categoryStatus')) || {};
-    const savedSelections = JSON.parse(localStorage.getItem('categorySelections')) || {};
-
-    const categories = savedOrder.filter(c => defaultCategories.includes(c));
-
-    categories.forEach(cat => {
-      status[cat] = savedStatus[cat] || 'on';
-      const div = document.createElement('div');
-      div.className = 'category';
-      div.setAttribute('draggable','true');
-      div.dataset.cat = cat;
-
-      const label = createLabel(cat);
-      const select = createSelect(cat, profil[cat]||[]);
-
-      if(savedSelections[cat]) select.value = savedSelections[cat];
-
-      if(['spruch','soundbett'].includes(cat)){
-        const opts = [...select.options].map(o=>o.value);
-        if(opts.length>0) select.value = opts[Math.floor(Math.random()*opts.length)];
-      }
-
-      if(['sender','frequenz','studio','sendereihe'].includes(cat)){
-        select.addEventListener('change', ()=>saveCategorySelection(cat, select.value));
-      }
-
-      const toggleBtn = createToggleButton(div, cat, select);
-      div.appendChild(label);
-      div.appendChild(select);
-      div.appendChild(toggleBtn);
-
-      if(cat==='uhr') div.appendChild(createNowButton(select));
-      else div.appendChild(createZufallButton(cat, select));
-
-      if(status[cat]==='aus') div.classList.add('disabled'), toggleBtn.textContent='Aus';
-      else if(status[cat]==='zufall') toggleBtn.textContent='An';
-
-      container.appendChild(div);
+    // Profil-Auswahl
+    const profileDiv = document.createElement('div');
+    profileDiv.className = 'category';
+    profileDiv.dataset.cat = 'profile';
+    const label = document.createElement('label');
+    label.textContent = 'Profil:';
+    const select = document.createElement('select');
+    profiles.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p;
+      opt.textContent = p;
+      select.appendChild(opt);
     });
+    select.value = selectedProfile;
+    select.addEventListener('change', () => {
+      selectedProfile = select.value;
+      localStorage.setItem('selectedProfile', selectedProfile);
+      loadCategories(selectedProfile, data[selectedProfile]);
+    });
+    profileDiv.appendChild(label);
+    profileDiv.appendChild(select);
+    container.appendChild(profileDiv);
 
-    enableDragAndDrop(container);
+    loadCategories(selectedProfile, data[selectedProfile]);
   } catch(e){ console.error(e); alert('Konnte content.cgi nicht laden'); }
 }
 
-// === Restliche Funktionen ===
-function enableDragAndDrop(container){/* ... wie bisher ... */} 
-function getDragAfterElement(container,y){/* ... */} 
-function saveCategoryOrder(container){/* ... */} 
-function createLabel(cat){ const l=document.createElement('label'); l.textContent=cat+':'; return l; }
-function createSelect(cat,files){ const s=document.createElement('select'); s.id=cat; files.forEach(f=>{ const o=document.createElement('option'); o.value=f; o.textContent=f; s.appendChild(o); }); return s; }
-function createToggleButton(div,cat,select){ const b=document.createElement('button'); b.textContent='An'; b.onclick=()=>{ if(status[cat]==='on'){ status[cat]='aus'; b.textContent='Aus'; div.classList.add('disabled'); select.disabled=true; } else{ status[cat]='on'; b.textContent='An'; div.classList.remove('disabled'); select.disabled=false; } saveCategoryStatus(); }; return b; }
-function createZufallButton(cat,select){ const b=document.createElement('button'); b.textContent='Zufall'; b.onclick=()=>{ status[cat]='zufall'; select.disabled=false; const opts=[...select.options].map(o=>o.value); if(opts.length>0) select.value=opts[Math.floor(Math.random()*opts.length)]; saveCategoryStatus(); }; return b; }
+function loadCategories(profileName, profilData){
+  const container = document.getElementById('categories');
+  const savedOrder = JSON.parse(localStorage.getItem('categoryOrder')) || defaultCategories;
+  const savedStatus = JSON.parse(localStorage.getItem('categoryStatus')) || {};
+  const savedSelections = JSON.parse(localStorage.getItem('categorySelections')) || {};
+
+  container.querySelectorAll('.category').forEach(div=>{
+    if(div.dataset.cat !== 'profile') div.remove();
+  });
+
+  const categories = savedOrder.filter(c => defaultCategories.includes(c));
+  categories.forEach(cat=>{
+    const files = profilData[cat] || [];
+    status[cat] = savedStatus[cat] || 'on';
+
+    const div = document.createElement('div');
+    div.className = 'category';
+    div.setAttribute('draggable','true');
+    div.dataset.cat = cat;
+
+    const label = createLabel(cat);
+    const select = createSelect(cat, files);
+
+    if(savedSelections[cat]) select.value = savedSelections[cat];
+
+    if(files.length === 0){
+      status[cat] = 'aus';
+      disableCategory(div);
+    }
+
+    if(['spruch','soundbett'].includes(cat) && files.length>0){
+      const opts = [...select.options].map(o=>o.value);
+      select.value = opts[Math.floor(Math.random()*opts.length)];
+    }
+
+    if(['sender','frequenz','studio','sendereihe'].includes(cat)){
+      select.addEventListener('change', ()=>saveCategorySelection(cat, select.value));
+    }
+
+    const toggleBtn = createToggleButton(div, cat, select);
+    div.appendChild(label);
+    div.appendChild(select);
+    div.appendChild(toggleBtn);
+
+    if(cat==='uhr' && files.length>0) div.appendChild(createNowButton(select));
+    else if(files.length>0) div.appendChild(createZufallButton(cat, select));
+
+    container.appendChild(div);
+  });
+
+  enableDragAndDrop(container);
+}
+
+function disableCategory(div){
+  div.classList.add('disabled');
+  const toggleBtn = div.querySelector('button');
+  div.querySelectorAll('select, button').forEach(el=>{
+    if(el !== toggleBtn) el.disabled = true;
+  });
+}
+function enableCategory(div){
+  div.classList.remove('disabled');
+  const toggleBtn = div.querySelector('button');
+  div.querySelectorAll('select, button').forEach(el=>{
+    if(el !== toggleBtn) el.disabled = false;
+  });
+}
+function enableDragAndDrop(container){
+  let dragged = null;
+  container.querySelectorAll('.category').forEach(div=>{
+    if(div.dataset.cat === 'profile') return;
+    div.addEventListener('dragstart', e=>{ dragged=div; div.classList.add('dragging'); });
+    div.addEventListener('dragend', e=>{ div.classList.remove('dragging'); dragged=null; saveCategoryOrder(container); });
+    div.addEventListener('dragover', e=>{
+      e.preventDefault();
+      const after = getDragAfterElement(container, e.clientY);
+      if(after==null) container.appendChild(dragged);
+      else container.insertBefore(dragged, after);
+    });
+  });
+}
+function getDragAfterElement(container, y){
+  const draggableElements=[...container.querySelectorAll('.category:not(.dragging)')];
+  return draggableElements.reduce((closest,child)=>{
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height/2;
+    if(offset<0 && offset>closest.offset) return {offset:offset, element:child};
+    else return closest;
+  }, {offset: Number.NEGATIVE_INFINITY}).element;
+}
+function saveCategoryOrder(container){
+  const order = [...container.querySelectorAll('.category')].map(d=>d.dataset.cat).filter(c => c !== 'profile');
+  localStorage.setItem('categoryOrder', JSON.stringify(order));
+}
+function createLabel(cat){ const l=document.createElement('label'); l.textContent=cat+':' ; return l; }
+function createSelect(cat,files){
+  const s=document.createElement('select'); s.id=cat;
+  files.forEach(f=>{ const o=document.createElement('option'); o.value=f; o.textContent=f; s.appendChild(o); });
+  if(cat==='uhr'){ const f=getCurrentHourFile([...s.options].map(o=>o.value)); if(f) s.value=f; }
+  return s;
+}
+function createToggleButton(div, cat, select){
+  const b = document.createElement('button');
+  b.textContent = (status[cat]==='aus') ? 'Aus' : 'An';
+  b.onclick = ()=>{
+    if(status[cat]==='on' || status[cat]==='zufall'){ 
+      status[cat]='aus'; 
+      b.textContent='Aus'; 
+      disableCategory(div); 
+    } else { 
+      status[cat]='on'; 
+      b.textContent='An'; 
+      enableCategory(div); 
+    }
+    saveCategoryStatus();
+  };
+  return b;
+}
+function createZufallButton(cat, select){ const b=document.createElement('button'); b.textContent='Zufall'; b.onclick=()=>{ status[cat]='zufall'; select.disabled=false; const opts=[...select.options].map(o=>o.value); if(opts.length>0) select.value=opts[Math.floor(Math.random()*opts.length)]; saveCategoryStatus(); }; return b; }
 function createNowButton(select){ const b=document.createElement('button'); b.textContent='Jetzt'; b.onclick=()=>{ const opts=[...select.options].map(o=>o.value); const f=getCurrentHourFile(opts); if(f) select.value=f; else alert('Keine Datei für aktuelle Stunde.'); }; return b; }
 function getCurrentHourFile(opts){ const h=(new Date()).getHours(); const hs=(h<10?'0'+h:h)+'-00.wav'; return opts.includes(hs)?hs:null; }
 function saveCategoryStatus(){ localStorage.setItem('categoryStatus', JSON.stringify(status)); }
 function saveCategorySelection(cat,value){ const selections=JSON.parse(localStorage.getItem('categorySelections'))||{}; selections[cat]=value; localStorage.setItem('categorySelections', JSON.stringify(selections)); }
-function chooseFile(id){ const s=document.getElementById(id); if(status[id]==='aus') return null; if(status[id]==='zufall'){ const opts=[...s.options].map(o=>o.value); if(opts.length===0)return null; return opts[Math.floor(Math.random()*opts.length)]; } return s.value; }
-function playAudio(){/* ... wie bisher ... */ }
-function stopAudio(){/* ... wie bisher ... */ }
+function chooseFile(id){
+  const s = document.getElementById(id);
+  if(!s) return null;
+  if(status[id]==='aus') return null;
+  if(status[id]==='zufall'){
+    const opts=[...s.options].map(o=>o.value);
+    if(opts.length===0) return null;
+    return opts[Math.floor(Math.random()*opts.length)];
+  }
+  return s.value;
+}
+function playAudio(){
+  const divs=document.querySelectorAll('.category');
+  let sequence=[], soundbettFile=null;
+  divs.forEach(div=>{
+    const sel = div.querySelector('select');
+    if(!sel) return;
+    if(status[sel.id]==='aus') return;
+    const file = chooseFile(sel.id);
+    if(!file) return;
 
+    if(sel.id==='soundbett') soundbettFile = 'profile/'+selectedProfile+'/soundbett/'+file;
+    else if(sel.id==='uhr') sequence.push('profile/'+selectedProfile+'/uhr/'+file);
+    else sequence.push('profile/'+selectedProfile+'/'+sel.id+'/'+file);
+  });
+
+  const audio=document.getElementById('audioPlayer');
+  const sb=document.getElementById('soundbettPlayer');
+  const vol=parseFloat(document.getElementById('volumeRange').value);
+  audio.volume=vol;
+  sb.volume=vol*0.1;
+
+  if(soundbettFile){ sb.src=soundbettFile; sb.loop=false; sb.play(); } 
+  else { sb.pause(); sb.src=''; }
+
+  if(sequence.length===0) return;
+
+  let idx=0;
+  audio.src=sequence[idx];
+  audio.play();
+  audio.onended=function(){
+    idx++;
+    if(idx<sequence.length){ audio.src=sequence[idx]; audio.play(); }
+    else{
+      const fadeOut = setInterval(()=>{
+        if(sb.volume>0.01) sb.volume-=0.01;
+        else{
+          clearInterval(fadeOut);
+          sb.pause();
+          sb.src='';
+          sb.volume=vol*0.1;
+        }
+      },100);
+      audio.onended=null;
+    }
+  };
+}
+function stopAudio(){ const audio=document.getElementById('audioPlayer'); const sb=document.getElementById('soundbettPlayer'); audio.pause(); audio.currentTime=0; audio.src=''; sb.pause(); sb.currentTime=0; sb.src=''; audio.onended=null; }
 const volumeRange=document.getElementById('volumeRange'); 
 const audioPlayer=document.getElementById('audioPlayer'); 
 const soundbettPlayer=document.getElementById('soundbettPlayer');
