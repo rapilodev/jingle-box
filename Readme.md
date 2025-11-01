@@ -4,6 +4,8 @@
 
 Jingle‑Box is an open-source, profile-based player for creating radio jingles, sweepers, and station IDs from modular audio clips—entirely in the browser, no backend required. Multiple profiles let users maintain separate audio libraries, with flexible playback and sequence customization.
 
+<img width="637" height="706" alt="grafik" src="https://github.com/user-attachments/assets/21d191dd-1563-4e70-b73f-67a663af5736" />
+
 ---
 
 ## Features
