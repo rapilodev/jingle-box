@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FRBB DAB+ Jingle-Player</title>
+<title>FRBB DAB+ Jingle Box</title>
 <style>
 :root {
   --accent: #0078ff;
@@ -23,7 +23,6 @@ body {
 }
 header { padding: 12px; text-align: center; background: #2a2a2a; color: #f5f5f5; box-shadow: 0 2px 8px rgba(0,0,0,0.4); transition: background 0.5s, color 0.5s; }
 main { flex: 1; display: flex; flex-direction: column; padding: 16px; overflow-y: auto; }
-footer { padding: 14px; text-align: center; background: #2a2a2a; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 -2px 8px rgba(0,0,0,0.4); transition: background 0.5s, color 0.5s; }
 .category {
   display: flex;
   flex-wrap: wrap;
@@ -45,9 +44,9 @@ footer { padding: 14px; text-align: center; background: #2a2a2a; display: flex; 
 .category button { padding: 8px 14px; margin-right: 6px; margin-top: 4px; font-size: 0.95em; border-radius: 6px; cursor: pointer; border: none; color: #fff; background: var(--accent); transition: all 0.3s ease; }
 .category button:hover { background: var(--accent-light); transform: translateY(-1px); }
 .category button:active { transform: scale(0.97); }
-footer button { padding: 10px 24px; font-size: 1.1em; border-radius: 8px; cursor: pointer; background: var(--accent); color: #fff; border: none; transition: all 0.3s ease; }
-footer button:hover { background: var(--accent-light); }
-footer button:active { transform: scale(0.97); }
+header button { padding: 10px 24px; font-size: 1.1em; border-radius: 8px; cursor: pointer; background: var(--accent); color: #fff; border: none; transition: all 0.3s ease; }
+header button:hover { background: var(--accent-light); }
+header button:active { transform: scale(0.97); }
 #volumeRange { vertical-align: middle; width: 160px; margin-left: 10px; accent-color: var(--accent); cursor: pointer; }
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
@@ -63,16 +62,16 @@ footer button:active { transform: scale(0.97); }
 </style>
 </head>
 <body>
-<header><h1>FRBB DAB+ Jingles</h1></header>
-<main id="categories"></main>
-<footer>
+<header><h1>FRBB DAB+ Jingles</h1>
   <button id="playBtn">▶ Abspielen</button>
   <button id="stopBtn">⏹ Stop</button>
-  <label for="volumeRange">🔊</label>
+  <label for="volumeRange"></label>
   <input id="volumeRange" type="range" min="0" max="1" step="0.01" value="1">
   <audio id="audioPlayer"></audio>
   <audio id="soundbettPlayer"></audio>
-</footer>
+
+</header>
+<main id="categories"></main>
 
 <script>
 const defaultCategories = ['uhr','sender','studio','frequenz','sendereihe','spruch','soundbett'];
@@ -166,9 +165,12 @@ function loadCategories(profileName, profilData){
     }
 
     const toggleBtn = createToggleButton(div, cat, select);
+    const previewBtn = createPreviewButton(cat, select);
+
     div.appendChild(label);
     div.appendChild(select);
     div.appendChild(toggleBtn);
+    div.appendChild(previewBtn);
 
     if(cat==='uhr' && files.length>0) div.appendChild(createNowButton(select));
     else if(files.length>0) div.appendChild(createZufallButton(cat, select));
@@ -245,6 +247,26 @@ function createToggleButton(div, cat, select){
       enableCategory(div); 
     }
     saveCategoryStatus();
+  };
+  return b;
+}
+function createPreviewButton(cat, select) {
+  const b = document.createElement('button');
+  b.textContent = '▶';
+  b.title = 'Vorhören';
+  b.onclick = () => {
+    const file = chooseFile(cat);
+    if (!file) return;
+    const previewAudio = document.getElementById('audioPreview') || (() => {
+      const a = document.createElement('audio');
+      a.id = 'audioPreview';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      return a;
+    })();
+    previewAudio.src = `profile/${selectedProfile}/${cat}/${file}`;
+    previewAudio.volume = parseFloat(document.getElementById('volumeRange').value);
+    previewAudio.play();
   };
   return b;
 }
@@ -360,6 +382,115 @@ volumeRange.addEventListener('input',()=>{
   soundbettPlayer.volume=vol*0.1; 
 });
 </script>
+
+<footer style="height:1%;">
+<h1>Anleitung für den Sendekennungs-Player</h1>
+
+<h2>Einleitung</h2>
+<p>Der Sendekennungs-Player kombiniert automatisch verschiedene Audio-Bausteine zu individuellen Jingles oder Senderkennungen. Jede_r Sendemacher_in kann dafür ein eigenes Profil anlegen (z. B. „milan“).</p>
+
+<hr>
+
+<h2>Struktur</h2>
+<p>Jedes Profil liegt als eigener Ordner im Hauptverzeichnis, z. B.:</p>
+<pre><code>./milan/</code></pre>
+<p>Innerhalb des Profils gibt es Unterordner für die verschiedenen Bausteine:</p>
+<pre><code>./milan/spruch/
+./milan/sender/
+./milan/frequenz/
+./milan/sendereihe/
+./milan/uhr/
+./milan/studio/
+./milan/soundbett/</code></pre>
+
+<hr>
+
+<h2>Aufbau und Benennung</h2>
+<ul>
+  <li>Jede Datei ist eine .wav-Datei</li>
+  <li>Dateiname = gesprochener Text, kleinbuchstaben, Bindestriche statt Leerzeichen</li>
+</ul>
+<p>Beispiele:</p>
+<pre><code>./milan/spruch/einfach-mal-abschalten.wav
+./milan/spruch/bitte-wenden.wav
+./milan/sender/frbb.wav
+./milan/frequenz/88.4.wav
+./milan/sendereihe/beatnikradio.wav
+./milan/uhr/18-00.wav
+./milan/studio/haus-der-statistik.wav
+./milan/soundbett/boogie.wav</code></pre>
+<p>Tipp: Sprecht die Wörter klar und einzeln ein – so kann das System flexibel kombinieren.</p>
+
+<hr>
+
+<h2>Nutzung im Player</h2>
+<p>Der Player erkennt automatisch alle Profile und Unterordner.</p>
+<ul>
+  <li>Kategorien an- oder ausschalten (z. B. nur „spruch“ + „sender“)</li>
+  <li>Zufällige Kombinationen generieren</li>
+  <li>Gezielt einzelne Bausteine auswählen</li>
+</ul>
+<p>Die Abspielreihenfolge kann einfach geändert werden </p>
+
+<hr>
+
+<h2>Bestandteile im Überblick</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Ordner</th>
+      <th>Inhalt / Beispiel</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>uhr</td>
+      <td>Uhrzeitansagen (01-00.wav, 18-00.wav)</td>
+    </tr>
+    <tr>
+      <td>sender</td>
+      <td>Sendernamen (frbb.wav, frbb-lang.wav)</td>
+    </tr>
+    <tr>
+      <td>studio</td>
+      <td>Studios/Standorte (piradio.wav, haus-der-statistik.wav)</td>
+    </tr>
+    <tr>
+      <td>sendereihe</td>
+      <td>Sendungstitel (funkalicious.wav, beatnikradio.wav)</td>
+    </tr>
+    <tr>
+      <td>spruch</td>
+      <td>Freie Sprüche (bitte-wenden.wav, wir-senden-trotzdem.wav)</td>
+    </tr>
+    <tr>
+      <td>soundbett</td>
+      <td>Musik-/Hintergrundbetten (boogie.wav, woogie.wav)</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>Eigene Aufnahmen einreichen</h2>
+<ol>
+  <li>Neuen Ordner mit Namen/Projekt anlegen, z. B. ./alex/</li>
+  <li>Unterstruktur wie oben verwenden</li>
+  <li>Dateien als .wav oder .mp3 reinkopieren</li>
+  <li>Dateien an die Technik weitergeben</li>
+</ol>
+
+<hr>
+
+<h2>Zusammenfassung</h2>
+<ul>
+  <li>Jede\*r kann ein Profil mit Sprachsamples anlegen</li>
+  <li>Dateinamen = gesprochener Inhalt, ohne Leerzeichen</li>
+  <li>Unterordner nach Funktion strukturieren</li>
+  <li>Player mischt Elemente automatisch oder manuell</li>
+</ul>
+<p>So entsteht ein flexibles System, das automatisch passende Sendekennungen und Jingles aus euren eigenen Aufnahmen generiert.</p>
+</footer>
 </body>
 </html>
 
