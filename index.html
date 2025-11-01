@@ -311,7 +311,7 @@ function playAudio(){
 
   const vol=parseFloat(document.getElementById('volumeRange').value);
   audio.volume=vol;
-  sb.volume=vol*0.5;
+  sb.volume=vol*0.1;
 
   if(soundbettFile){ sb.src=soundbettFile; sb.loop=false; sb.play(); }
   else { sb.pause(); sb.src=''; }
@@ -327,7 +327,18 @@ function playAudio(){
       audio.src=sequence[idx];
       audio.play();
     } else {
-      sb.pause(); sb.src=''; audio.onended=null;
+      // === Soundbett am Ende langsam ausblenden ===
+      const fadeOut = setInterval(() => {
+        if (sb.volume > 0.01) {
+          sb.volume -= 0.01;
+        } else {
+          clearInterval(fadeOut);
+          sb.pause();
+          sb.src = '';
+          sb.volume = vol * 0.1; // Reset für nächste Wiedergabe
+        }
+      }, 100); // alle 100 ms Lautstärke etwas senken (~5 Sekunden Fade)
+      audio.onended=null;
     }
   };
 }
