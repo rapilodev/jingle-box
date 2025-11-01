@@ -124,9 +124,13 @@ async function loadContent() {
 
 function loadCategories(profileName, profilData){
   const container = document.getElementById('categories');
+
+  // Status und Auswahl pro Profil laden
+  const allStatuses = JSON.parse(localStorage.getItem('categoryStatus')) || {};
+  const savedStatus = allStatuses[profileName] || {};
+  const allSelections = JSON.parse(localStorage.getItem('categorySelections')) || {};
+  const savedSelections = allSelections[profileName] || {};
   const savedOrder = JSON.parse(localStorage.getItem('categoryOrder')) || defaultCategories;
-  const savedStatus = JSON.parse(localStorage.getItem('categoryStatus')) || {};
-  const savedSelections = JSON.parse(localStorage.getItem('categorySelections')) || {};
 
   container.querySelectorAll('.category').forEach(div=>{
     if(div.dataset.cat !== 'profile') div.remove();
@@ -152,7 +156,7 @@ function loadCategories(profileName, profilData){
       disableCategory(div);
     }
 
-    if(['spruch','soundbett'].includes(cat) && files.length>0){
+    if(['spruch','soundbett'].includes(cat) && files.length>0 && status[cat]!=='zufall'){
       const opts = [...select.options].map(o=>o.value);
       select.value = opts[Math.floor(Math.random()*opts.length)];
     }
@@ -168,6 +172,10 @@ function loadCategories(profileName, profilData){
 
     if(cat==='uhr' && files.length>0) div.appendChild(createNowButton(select));
     else if(files.length>0) div.appendChild(createZufallButton(cat, select));
+
+    // Status beim Laden anwenden
+    if(status[cat]==='aus') disableCategory(div);
+    else enableCategory(div);
 
     container.appendChild(div);
   });
@@ -240,11 +248,45 @@ function createToggleButton(div, cat, select){
   };
   return b;
 }
-function createZufallButton(cat, select){ const b=document.createElement('button'); b.textContent='Zufall'; b.onclick=()=>{ status[cat]='zufall'; select.disabled=false; const opts=[...select.options].map(o=>o.value); if(opts.length>0) select.value=opts[Math.floor(Math.random()*opts.length)]; saveCategoryStatus(); }; return b; }
-function createNowButton(select){ const b=document.createElement('button'); b.textContent='Jetzt'; b.onclick=()=>{ const opts=[...select.options].map(o=>o.value); const f=getCurrentHourFile(opts); if(f) select.value=f; else alert('Keine Datei für aktuelle Stunde.'); }; return b; }
-function getCurrentHourFile(opts){ const h=(new Date()).getHours(); const hs=(h<10?'0'+h:h)+'-00.wav'; return opts.includes(hs)?hs:null; }
-function saveCategoryStatus(){ localStorage.setItem('categoryStatus', JSON.stringify(status)); }
-function saveCategorySelection(cat,value){ const selections=JSON.parse(localStorage.getItem('categorySelections'))||{}; selections[cat]=value; localStorage.setItem('categorySelections', JSON.stringify(selections)); }
+function createZufallButton(cat, select){ 
+  const b=document.createElement('button'); 
+  b.textContent='Zufall'; 
+  b.onclick=()=>{
+    status[cat]='zufall'; 
+    select.disabled=false; 
+    const opts=[...select.options].map(o=>o.value); 
+    if(opts.length>0) select.value=opts[Math.floor(Math.random()*opts.length)]; 
+    saveCategoryStatus(); 
+  }; 
+  return b; 
+}
+function createNowButton(select){ 
+  const b=document.createElement('button'); 
+  b.textContent='Jetzt'; 
+  b.onclick=()=>{
+    const opts=[...select.options].map(o=>o.value); 
+    const f=getCurrentHourFile(opts); 
+    if(f) select.value=f; 
+    else alert('Keine Datei für aktuelle Stunde.'); 
+  }; 
+  return b; 
+}
+function getCurrentHourFile(opts){ 
+  const h=(new Date()).getHours(); 
+  const hs=(h<10?'0'+h:h)+'-00.wav'; 
+  return opts.includes(hs)?hs:null; 
+}
+function saveCategoryStatus(){ 
+  const allStatuses = JSON.parse(localStorage.getItem('categoryStatus')) || {};
+  allStatuses[selectedProfile] = status;
+  localStorage.setItem('categoryStatus', JSON.stringify(allStatuses));
+}
+function saveCategorySelection(cat,value){ 
+  const allSelections = JSON.parse(localStorage.getItem('categorySelections')) || {};
+  allSelections[selectedProfile] = allSelections[selectedProfile] || {};
+  allSelections[selectedProfile][cat] = value;
+  localStorage.setItem('categorySelections', JSON.stringify(allSelections));
+}
 function chooseFile(id){
   const s = document.getElementById(id);
   if(!s) return null;
@@ -302,11 +344,21 @@ function playAudio(){
     }
   };
 }
-function stopAudio(){ const audio=document.getElementById('audioPlayer'); const sb=document.getElementById('soundbettPlayer'); audio.pause(); audio.currentTime=0; audio.src=''; sb.pause(); sb.currentTime=0; sb.src=''; audio.onended=null; }
+function stopAudio(){ 
+  const audio=document.getElementById('audioPlayer'); 
+  const sb=document.getElementById('soundbettPlayer'); 
+  audio.pause(); audio.currentTime=0; audio.src=''; 
+  sb.pause(); sb.currentTime=0; sb.src=''; 
+  audio.onended=null; 
+}
 const volumeRange=document.getElementById('volumeRange'); 
 const audioPlayer=document.getElementById('audioPlayer'); 
 const soundbettPlayer=document.getElementById('soundbettPlayer');
-volumeRange.addEventListener('input',()=>{ const vol=parseFloat(volumeRange.value); audioPlayer.volume=vol; soundbettPlayer.volume=vol*0.1; });
+volumeRange.addEventListener('input',()=>{
+  const vol=parseFloat(volumeRange.value); 
+  audioPlayer.volume=vol; 
+  soundbettPlayer.volume=vol*0.1; 
+});
 </script>
 </body>
 </html>
