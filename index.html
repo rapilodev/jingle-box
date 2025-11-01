@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sendekennungs-Player</title>
+<style>
+body { margin:0; font-family: Arial, sans-serif; display:flex; flex-direction:column; height:100vh; }
+header { padding:10px; text-align:center; background:#222; color:#fff; }
+main { flex:1; display:flex; flex-direction:column; padding:10px; overflow-y:auto; }
+.category { display:flex; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+.category label { width:100px; }
+.category select { flex:1; padding:5px; margin-right:5px; min-width:150px; }
+.category button { padding:5px 10px; margin-right:5px; margin-top:3px; }
+footer { padding:10px; text-align:center; background:#222; }
+audio { width:100%; margin-top:10px; }
+</style>
+</head>
+<body>
+<header><h1>Sendekennungs-Player</h1></header>
+<main id="categories"></main>
+<footer>
+    <button id="playBtn">Abspielen</button>
+    <audio id="audioPlayer" controls></audio>
+    <audio id="soundbettPlayer"></audio>
+</footer>
+
+<script>
+const categoryList=['uhr','sender','studio','sendereihe','spruch','frequenz','soundbett'];
+const basePath='./milan/';
+
+let status = {}; // An/Aus/Zufall per category
+
+async function loadContent(){
+    try{
+        const res = await fetch('content.cgi'); // CGI endpoint
+        if(!res.ok) throw new Error('Fehler beim Laden');
+        const profil=(await res.json()).milan;
+        const container=document.getElementById('categories');
+        container.innerHTML='';
+
+        categoryList.forEach(cat=>{
+            status[cat]='on';
+            const div=document.createElement('div'); div.className='category';
+            const label=document.createElement('label'); label.textContent=cat+':';
+            const select=document.createElement('select'); select.id=cat;
+
+            (profil[cat]||[]).forEach(f=>{
+                const opt=document.createElement('option'); opt.value=f; opt.textContent=f;
+                select.appendChild(opt);
+            });
+
+            // An/Aus toggle
+            const toggleBtn=document.createElement('button'); toggleBtn.textContent='An';
+            toggleBtn.onclick=()=>{
+                if(status[cat]==='on'){ status[cat]='aus'; toggleBtn.textContent='Aus'; select.disabled=true; }
+                else { status[cat]='on'; toggleBtn.textContent='An'; select.disabled=false; }
+            };
+
+            // Zufall
+            const zufallBtn=document.createElement('button'); zufallBtn.textContent='Zufall';
+            zufallBtn.onclick=()=>{ status[cat]='zufall'; select.disabled=false; };
+
+            div.appendChild(label);
+            div.appendChild(select);
+            div.appendChild(toggleBtn);
+            div.appendChild(zufallBtn);
+            container.appendChild(div);
+        });
+    } catch(e){ console.error(e); alert('Konnte content.cgi nicht laden'); }
+}
+
+function getCurrentHourFile(uhrOptions){
+    let hour=(new Date()).getHours()||24;
+    const hStr=hour<10?'0'+hour:''+hour;
+    const f=hStr+'-00.wav';
+    return uhrOptions.includes(f)?f:null;
+}
+
+function chooseFile(selectId){
+    const sel=document.getElementById(selectId);
+    if(status[selectId]==='aus') return null;
+    if(status[selectId]==='zufall'){
+        const options=Array.from(sel.options).map(o=>o.value);
+        if(options.length===0) return null;
+        return options[Math.floor(Math.random()*options.length)];
+    }
+    return sel.value;
+}
+
+function playAudio(){
+    const divs=document.querySelectorAll('.category');
+    let sequence=[], soundbettFile=null;
+
+    divs.forEach(div=>{
+        const sel=div.querySelector('select');
+        if(sel.id==='soundbett'){
+            const f=chooseFile(sel.id); 
+            if(f) soundbettFile=basePath+'soundbett/'+f;
+        } else if(sel.id==='uhr'){
+            const options=Array.from(sel.options).map(o=>o.value);
+            let f = status[sel.id]==='zufall'
+                ? options[Math.floor(Math.random()*options.length)]
+                : getCurrentHourFile(options);
+            if(f) sequence.push(basePath+'uhr/'+f);
+        } else{
+            const f=chooseFile(sel.id); 
+            if(f) sequence.push(basePath+sel.id+'/'+f);
+        }
+    });
+
+    const audio=document.getElementById('audioPlayer');
+    const sb=document.getElementById('soundbettPlayer');
+
+    // Soundbett: play once at half volume
+    if(soundbettFile){ 
+        sb.src = soundbettFile; 
+        sb.volume = 0.5; 
+        sb.loop = false; 
+        sb.play(); 
+    } else { 
+        sb.pause(); sb.src=''; 
+    }
+
+    if(sequence.length===0) return;
+    let idx=0; 
+    audio.src=sequence[idx]; 
+    audio.play();
+
+    audio.onended = function(){
+        idx++; 
+        if(idx < sequence.length){
+            audio.src = sequence[idx]; 
+            audio.play();
+        } else {
+            // Stop soundbett when sequence ends
+            sb.pause(); 
+            sb.src=''; 
+        }
+    };
+}
+
+window.addEventListener('load', loadContent);
+document.getElementById('playBtn').addEventListener('click', playAudio);
+</script>
+</body>
+</html>
+
