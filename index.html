@@ -93,7 +93,7 @@ footer button {
 </footer>
 
 <script>
-const defaultCategories = ['uhr','sender','studio','sendereihe','spruch','frequenz','soundbett'];
+const defaultCategories = ['uhr','sender','studio','frequenz','sendereihe','spruch','soundbett'];
 const basePath = './milan/';
 let status = {}; // enthält on/off/zufall
 
@@ -111,6 +111,7 @@ async function loadContent() {
 
     const savedOrder = JSON.parse(localStorage.getItem('categoryOrder')) || defaultCategories;
     const savedStatus = JSON.parse(localStorage.getItem('categoryStatus')) || {};
+    const savedSelections = JSON.parse(localStorage.getItem('categorySelections')) || {};
 
     const categories = savedOrder.filter(c => defaultCategories.includes(c));
 
@@ -123,8 +124,27 @@ async function loadContent() {
 
       const label = createLabel(cat);
       const select = createSelect(cat, profil[cat] || []);
-      const toggleBtn = createToggleButton(cat, select);
 
+      // --- gespeicherte Auswahl wiederherstellen ---
+      if (savedSelections[cat]) {
+        select.value = savedSelections[cat];
+      }
+
+      // --- zufällige Auswahl bei Spruch und Soundbett ---
+      if (['spruch', 'soundbett'].includes(cat)) {
+        const opts = [...select.options].map(o => o.value);
+        if (opts.length > 0)
+          select.value = opts[Math.floor(Math.random() * opts.length)];
+      }
+
+      // --- Auswahländerung speichern ---
+      if (['sender', 'frequenz', 'studio', 'sendereihe'].includes(cat)) {
+        select.addEventListener('change', () => {
+          saveCategorySelection(cat, select.value);
+        });
+      }
+
+      const toggleBtn = createToggleButton(cat, select);
       div.appendChild(label);
       div.appendChild(select);
       div.appendChild(toggleBtn);
@@ -142,7 +162,7 @@ async function loadContent() {
         toggleBtn.textContent = 'Aus';
         select.disabled = true;
       } else if (status[cat] === 'zufall') {
-        toggleBtn.textContent = 'An'; // visuell gleich, Zufall bleibt per Button
+        toggleBtn.textContent = 'An';
       }
 
       container.appendChild(div);
@@ -242,11 +262,17 @@ function getCurrentHourFile(opts){
   return opts.includes(hs)?hs:null;
 }
 
-// === Speicherung des An/Aus-Zustands ===
+// === Speicherung ===
 function saveCategoryStatus() {
   localStorage.setItem('categoryStatus', JSON.stringify(status));
 }
+function saveCategorySelection(cat, value) {
+  const selections = JSON.parse(localStorage.getItem('categorySelections')) || {};
+  selections[cat] = value;
+  localStorage.setItem('categorySelections', JSON.stringify(selections));
+}
 
+// === Datei-Wahl ===
 function chooseFile(id){
   const s=document.getElementById(id);
   if(status[id]==='aus')return null;
