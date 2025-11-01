@@ -31,41 +31,65 @@ const basePath='./milan/';
 
 let status = {}; // An/Aus/Zufall per category
 
-async function loadContent(){
-    try{
+async function loadContent() {
+    try {
         const res = await fetch('content.cgi'); // CGI endpoint
-        if(!res.ok) throw new Error('Fehler beim Laden');
-        const profil=(await res.json()).milan;
-        const container=document.getElementById('categories');
-        container.innerHTML='';
+        if (!res.ok) throw new Error('Fehler beim Laden');
+        const profil = (await res.json()).milan;
+        const container = document.getElementById('categories');
+        container.innerHTML = '';
 
-        categoryList.forEach(cat=>{
-            status[cat]='on';
-            const div=document.createElement('div'); div.className='category';
-            const label=document.createElement('label'); label.textContent=cat+':';
-            const select=document.createElement('select'); select.id=cat;
+        categoryList.forEach(cat => {
+            status[cat] = 'on';
+            const div = document.createElement('div');
+            div.className = 'category';
 
-            (profil[cat]||[]).forEach(f=>{
-                const opt=document.createElement('option'); opt.value=f; opt.textContent=f;
+            const label = document.createElement('label');
+            label.textContent = cat + ':';
+
+            const select = document.createElement('select');
+            select.id = cat;
+
+            (profil[cat] || []).forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f;
+                opt.textContent = f;
                 select.appendChild(opt);
             });
 
+            // Jetzt-Standardauswahl nur für "uhr"
+            if (cat === 'uhr') {
+                const options = Array.from(select.options).map(o => o.value);
+                const f = getCurrentHourFile(options);
+                if (f) {
+                    select.value = f; // aktuelle Stunde standardmäßig auswählen
+                }
+            }
+
             // An/Aus toggle
-            const toggleBtn=document.createElement('button'); toggleBtn.textContent='An';
-            toggleBtn.onclick=()=>{
-                if(status[cat]==='on'){ status[cat]='aus'; toggleBtn.textContent='Aus'; select.disabled=true; }
-                else { status[cat]='on'; toggleBtn.textContent='An'; select.disabled=false; }
+            const toggleBtn = document.createElement('button');
+            toggleBtn.textContent = 'An';
+            toggleBtn.onclick = () => {
+                if (status[cat] === 'on') {
+                    status[cat] = 'aus';
+                    toggleBtn.textContent = 'Aus';
+                    select.disabled = true;
+                } else {
+                    status[cat] = 'on';
+                    toggleBtn.textContent = 'An';
+                    select.disabled = false;
+                }
             };
 
             // Zufall
-            const zufallBtn=document.createElement('button'); zufallBtn.textContent='Zufall';
-            zufallBtn.onclick=()=>{
-                status[cat]='zufall';
-                select.disabled=false;
+            const zufallBtn = document.createElement('button');
+            zufallBtn.textContent = 'Zufall';
+            zufallBtn.onclick = () => {
+                status[cat] = 'zufall';
+                select.disabled = false;
 
-                // Immediately pick a random option and update select
                 const options = Array.from(select.options).map(o => o.value);
-                if(options.length>0){
+                if (options.length > 0) {
                     const rand = options[Math.floor(Math.random() * options.length)];
                     select.value = rand;
                 }
@@ -75,9 +99,29 @@ async function loadContent(){
             div.appendChild(select);
             div.appendChild(toggleBtn);
             div.appendChild(zufallBtn);
+
+            // Jetzt-Button nur für "uhr" (wählt die aktuelle Stunde aus)
+            if (cat === 'uhr') {
+                const nowBtn = document.createElement('button');
+                nowBtn.textContent = 'Jetzt';
+                nowBtn.onclick = () => {
+                    const options = Array.from(select.options).map(o => o.value);
+                    const f = getCurrentHourFile(options);
+                    if (f) {
+                        select.value = f; // aktuelle Stunde auswählen
+                    } else {
+                        alert('Keine Datei für die aktuelle Stunde vorhanden.');
+                    }
+                };
+                div.appendChild(nowBtn);
+            }
+
             container.appendChild(div);
         });
-    } catch(e){ console.error(e); alert('Konnte content.cgi nicht laden'); }
+    } catch (e) {
+        console.error(e);
+        alert('Konnte content.cgi nicht laden');
+    }
 }
 
 function getCurrentHourFile(uhrOptions){
