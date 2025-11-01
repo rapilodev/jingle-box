@@ -8,11 +8,16 @@
 body { margin:0; font-family: Arial, sans-serif; display:flex; flex-direction:column; height:100vh; }
 header { padding:10px; text-align:center; background:#222; color:#fff; }
 main { flex:1; display:flex; flex-direction:column; padding:10px; overflow-y:auto; }
-.category { display:flex; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+.category { 
+  display:flex; flex-wrap:wrap; align-items:center; margin-bottom:10px;
+  background:#f4f4f4; padding:6px; border-radius:6px; cursor:move;
+}
+.category.dragging { opacity:0.5; border:2px dashed #333; }
 .category label { width:100px; }
 .category select { flex:1; padding:5px; margin-right:5px; min-width:150px; }
 .category button { padding:5px 10px; margin-right:5px; margin-top:3px; }
 footer { padding:10px; text-align:center; background:#222; }
+footer button { margin: 0 5px; }
 audio { width:100%; margin-top:10px; }
 </style>
 </head>
@@ -27,190 +32,187 @@ audio { width:100%; margin-top:10px; }
 </footer>
 
 <script>
-const categoryList=['uhr','sender','studio','sendereihe','spruch','frequenz','soundbett'];
-const basePath='./milan/';
+const defaultCategories = ['uhr','sender','studio','sendereihe','spruch','frequenz','soundbett'];
+const basePath = './milan/';
+let status = {}; 
 
-let status = {}; // An/Aus/Zufall per category
+window.addEventListener('load', loadContent);
+document.getElementById('playBtn').addEventListener('click', playAudio);
+document.getElementById('stopBtn').addEventListener('click', stopAudio);
 
 async function loadContent() {
     try {
-        const res = await fetch('content.cgi'); // CGI endpoint
+        const res = await fetch('content.cgi');
         if (!res.ok) throw new Error('Fehler beim Laden');
         const profil = (await res.json()).milan;
         const container = document.getElementById('categories');
         container.innerHTML = '';
 
-        categoryList.forEach(cat => {
+        const savedOrder = JSON.parse(localStorage.getItem('categoryOrder')) || defaultCategories;
+        const categories = savedOrder.filter(c => defaultCategories.includes(c));
+
+        categories.forEach(cat => {
             status[cat] = 'on';
             const div = document.createElement('div');
             div.className = 'category';
+            div.setAttribute('draggable', 'true');
+            div.dataset.cat = cat;
 
-            const label = document.createElement('label');
-            label.textContent = cat + ':';
-
-            const select = document.createElement('select');
-            select.id = cat;
-
-            (profil[cat] || []).forEach(f => {
-                const opt = document.createElement('option');
-                opt.value = f;
-                opt.textContent = f;
-                select.appendChild(opt);
-            });
-
-            // Jetzt-Standardauswahl nur für "uhr"
-            if (cat === 'uhr') {
-                const options = Array.from(select.options).map(o => o.value);
-                const f = getCurrentHourFile(options);
-                if (f) {
-                    select.value = f; // aktuelle Stunde standardmäßig auswählen
-                }
-            }
-
-            // An/Aus toggle
-            const toggleBtn = document.createElement('button');
-            toggleBtn.textContent = 'An';
-            toggleBtn.onclick = () => {
-                if (status[cat] === 'on') {
-                    status[cat] = 'aus';
-                    toggleBtn.textContent = 'Aus';
-                    select.disabled = true;
-                } else {
-                    status[cat] = 'on';
-                    toggleBtn.textContent = 'An';
-                    select.disabled = false;
-                }
-            };
-
-            // Zufall
-            const zufallBtn = document.createElement('button');
-            zufallBtn.textContent = 'Zufall';
-            zufallBtn.onclick = () => {
-                status[cat] = 'zufall';
-                select.disabled = false;
-
-                const options = Array.from(select.options).map(o => o.value);
-                if (options.length > 0) {
-                    const rand = options[Math.floor(Math.random() * options.length)];
-                    select.value = rand;
-                }
-            };
-
+            const label = createLabel(cat);
+            const select = createSelect(cat, profil[cat] || []);
+            const toggleBtn = createToggleButton(cat, select);
+            const zufallBtn = createZufallButton(cat, select);
+            
             div.appendChild(label);
             div.appendChild(select);
             div.appendChild(toggleBtn);
             div.appendChild(zufallBtn);
 
-            // Jetzt-Button nur für "uhr" (wählt die aktuelle Stunde aus)
-            if (cat === 'uhr') {
-                const nowBtn = document.createElement('button');
-                nowBtn.textContent = 'Jetzt';
-                nowBtn.onclick = () => {
-                    const options = Array.from(select.options).map(o => o.value);
-                    const f = getCurrentHourFile(options);
-                    if (f) {
-                        select.value = f; // aktuelle Stunde auswählen
-                    } else {
-                        alert('Keine Datei für die aktuelle Stunde vorhanden.');
-                    }
-                };
+            if(cat === 'uhr') {
+                const nowBtn = createNowButton(select);
                 div.appendChild(nowBtn);
             }
 
             container.appendChild(div);
         });
-    } catch (e) {
+
+        enableDragAndDrop(container);
+    } catch(e) {
         console.error(e);
         alert('Konnte content.cgi nicht laden');
     }
 }
 
-function getCurrentHourFile(uhrOptions){
-    let hour=(new Date()).getHours()||24;
-    const hStr=hour<10?'0'+hour:''+hour;
-    const f=hStr+'-00.wav';
-    return uhrOptions.includes(f)?f:null;
+// === Drag & Drop ===
+function enableDragAndDrop(container){
+    let dragged = null;
+    container.querySelectorAll('.category').forEach(div => {
+        div.addEventListener('dragstart', e => {
+            dragged = div;
+            div.classList.add('dragging');
+        });
+        div.addEventListener('dragend', e => {
+            div.classList.remove('dragging');
+            dragged = null;
+            saveCategoryOrder(container);
+        });
+        div.addEventListener('dragover', e => {
+            e.preventDefault();
+            const after = getDragAfterElement(container, e.clientY);
+            if (after == null) container.appendChild(dragged);
+            else container.insertBefore(dragged, after);
+        });
+    });
+}
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.category:not(.dragging)')];
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else return closest;
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+function saveCategoryOrder(container){
+    const order = [...container.querySelectorAll('.category')].map(d => d.dataset.cat);
+    localStorage.setItem('categoryOrder', JSON.stringify(order));
 }
 
-function chooseFile(selectId){
-    const sel=document.getElementById(selectId);
-    if(status[selectId]==='aus') return null;
-    if(status[selectId]==='zufall'){
-        const options=Array.from(sel.options).map(o=>o.value);
-        if(options.length===0) return null;
-        return options[Math.floor(Math.random()*options.length)];
+// === Hilfsfunktionen ===
+function createLabel(cat){ const l=document.createElement('label'); l.textContent=cat+':'; return l; }
+function createSelect(cat,files){
+    const s=document.createElement('select'); s.id=cat;
+    files.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;s.appendChild(o);});
+    if(cat==='uhr'){const f=getCurrentHourFile([...s.options].map(o=>o.value));if(f)s.value=f;}
+    return s;
+}
+function createToggleButton(cat,select){
+    const b=document.createElement('button');b.textContent='An';
+    b.onclick=()=>{if(status[cat]==='on'){status[cat]='aus';b.textContent='Aus';select.disabled=true;}
+    else{status[cat]='on';b.textContent='An';select.disabled=false;}};return b;
+}
+function createZufallButton(cat,select){
+    const b=document.createElement('button');b.textContent='Zufall';
+    b.onclick=()=>{status[cat]='zufall';select.disabled=false;
+        const opts=[...select.options].map(o=>o.value);
+        if(opts.length>0)select.value=opts[Math.floor(Math.random()*opts.length)];
+    };return b;
+}
+function createNowButton(select){
+    const b=document.createElement('button');b.textContent='Jetzt';
+    b.onclick=()=>{const opts=[...select.options].map(o=>o.value);
+        const f=getCurrentHourFile(opts);
+        if(f)select.value=f;else alert('Keine Datei für aktuelle Stunde.');};
+    return b;
+}
+function getCurrentHourFile(opts){
+    const h=(new Date()).getHours();
+    const hs=(h<10?'0'+h:h)+ '-00.wav';
+    return opts.includes(hs)?hs:null;
+}
+function chooseFile(id){
+    const s=document.getElementById(id);
+    if(status[id]==='aus')return null;
+    if(status[id]==='zufall'){const opts=[...s.options].map(o=>o.value);
+        if(opts.length===0)return null;
+        return opts[Math.floor(Math.random()*opts.length)];
     }
-    return sel.value;
+    return s.value;
 }
 
+// === Wiedergabe ===
 function playAudio(){
     const divs=document.querySelectorAll('.category');
-    let sequence=[], soundbettFile=null;
+    let sequence=[],soundbettFile=null;
 
     divs.forEach(div=>{
         const sel=div.querySelector('select');
         if(sel.id==='soundbett'){
-            const f=chooseFile(sel.id); 
-            if(f) soundbettFile=basePath+'soundbett/'+f;
-        } else if(sel.id==='uhr'){
-            const options=Array.from(sel.options).map(o=>o.value);
-            let f = status[sel.id]==='zufall'
-                ? options[Math.floor(Math.random()*options.length)]
-                : getCurrentHourFile(options);
-            if(f) sequence.push(basePath+'uhr/'+f);
-        } else{
-            const f=chooseFile(sel.id); 
-            if(f) sequence.push(basePath+sel.id+'/'+f);
+            const f=chooseFile(sel.id);
+            if(f)soundbettFile=basePath+'soundbett/'+f;
+        }else if(sel.id==='uhr'){
+            const opts=[...sel.options].map(o=>o.value);
+            let f=status[sel.id]==='zufall'
+                ? opts[Math.floor(Math.random()*opts.length)]
+                : getCurrentHourFile(opts);
+            if(f)sequence.push(basePath+'uhr/'+f);
+        }else{
+            const f=chooseFile(sel.id);
+            if(f)sequence.push(basePath+sel.id+'/'+f);
         }
     });
 
     const audio=document.getElementById('audioPlayer');
     const sb=document.getElementById('soundbettPlayer');
 
-    // Soundbett: play once at half volume
-    if(soundbettFile){ 
-        sb.src = soundbettFile; 
-        sb.volume = 0.5; 
-        sb.loop = false; 
-        sb.play(); 
-    } else { 
-        sb.pause(); sb.src=''; 
-    }
+    if(soundbettFile){ sb.src=soundbettFile; sb.volume=0.5; sb.loop=false; sb.play(); }
+    else { sb.pause(); sb.src=''; }
 
-    if(sequence.length===0) return;
-    let idx=0; 
-    audio.src=sequence[idx]; 
+    if(sequence.length===0)return;
+    let idx=0;
+    audio.src=sequence[idx];
     audio.play();
 
-    audio.onended = function(){
-        idx++; 
-        if(idx < sequence.length){
-            audio.src = sequence[idx]; 
+    audio.onended=function(){
+        idx++;
+        if(idx<sequence.length){
+            audio.src=sequence[idx];
             audio.play();
         } else {
-            // Stop soundbett when sequence ends
-            sb.pause(); 
-            sb.src='';
+            sb.pause(); sb.src=''; audio.onended=null;
         }
     };
 }
 
-window.addEventListener('load', loadContent);
-document.getElementById('playBtn').addEventListener('click', playAudio);
-document.getElementById('stopBtn').addEventListener('click', () => {
-    const audio = document.getElementById('audioPlayer');
-    const sb = document.getElementById('soundbettPlayer');
-
-    // Hauptsequenz stoppen
-    audio.pause();
-    audio.currentTime = 0;
-    audio.src = '';
-
-    // Soundbett stoppen
-    sb.pause();
-    sb.currentTime = 0;
-    sb.src = '';
-});
+// === Stop-Funktion ===
+function stopAudio(){
+    const audio=document.getElementById('audioPlayer');
+    const sb=document.getElementById('soundbettPlayer');
+    audio.pause(); audio.currentTime=0; audio.src='';
+    sb.pause(); sb.currentTime=0; sb.src='';
+    audio.onended=null;
+}
 </script>
 </body>
 </html>
