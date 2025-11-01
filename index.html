@@ -21,6 +21,7 @@ audio { width:100%; margin-top:10px; }
 <main id="categories"></main>
 <footer>
     <button id="playBtn">Abspielen</button>
+    <button id="stopBtn">Stop</button>
     <audio id="audioPlayer" controls></audio>
     <audio id="soundbettPlayer"></audio>
 </footer>
@@ -196,6 +197,20 @@ function playAudio(){
 
 window.addEventListener('load', loadContent);
 document.getElementById('playBtn').addEventListener('click', playAudio);
+document.getElementById('stopBtn').addEventListener('click', () => {
+    const audio = document.getElementById('audioPlayer');
+    const sb = document.getElementById('soundbettPlayer');
+
+    // Hauptsequenz stoppen
+    audio.pause();
+    audio.currentTime = 0;
+    audio.src = '';
+
+    // Soundbett stoppen
+    sb.pause();
+    sb.currentTime = 0;
+    sb.src = '';
+});
 </script>
 </body>
 </html>
