@@ -17,7 +17,7 @@ audio { width:100%; margin-top:10px; }
 </style>
 </head>
 <body>
-<header><h1>Sendekennungs-Player</h1></header>
+<header><h1>FRBB DAB+ Jingles</h1></header>
 <main id="categories"></main>
 <footer>
     <button id="playBtn">Abspielen</button>
@@ -59,7 +59,17 @@ async function loadContent(){
 
             // Zufall
             const zufallBtn=document.createElement('button'); zufallBtn.textContent='Zufall';
-            zufallBtn.onclick=()=>{ status[cat]='zufall'; select.disabled=false; };
+            zufallBtn.onclick=()=>{
+                status[cat]='zufall';
+                select.disabled=false;
+
+                // Immediately pick a random option and update select
+                const options = Array.from(select.options).map(o => o.value);
+                if(options.length>0){
+                    const rand = options[Math.floor(Math.random() * options.length)];
+                    select.value = rand;
+                }
+            };
 
             div.appendChild(label);
             div.appendChild(select);
@@ -135,7 +145,7 @@ function playAudio(){
         } else {
             // Stop soundbett when sequence ends
             sb.pause(); 
-            sb.src=''; 
+            sb.src='';
         }
     };
 }
