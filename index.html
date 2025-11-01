@@ -21,8 +21,22 @@ body {
   height: 100vh;
   transition: background 0.5s, color 0.5s;
 }
-header { padding: 12px; text-align: center; background: #2a2a2a; color: #f5f5f5; box-shadow: 0 2px 8px rgba(0,0,0,0.4); transition: background 0.5s, color 0.5s; }
-main { flex: 1; display: flex; flex-direction: column; padding: 16px; overflow-y: auto; }
+header { 
+  padding: 12px; 
+  text-align: center; 
+  background: #2a2a2a; 
+  color: #f5f5f5; 
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4); 
+  transition: background 0.5s, color 0.5s;
+  position: relative;
+}
+main { 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column; 
+  padding: 16px; 
+  overflow-y: auto; 
+}
 .category {
   display: flex;
   flex-wrap: wrap;
@@ -34,72 +48,357 @@ main { flex: 1; display: flex; flex-direction: column; padding: 16px; overflow-y
   border-radius: var(--border-radius);
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   transition: all 0.3s ease;
+  position: relative;
 }
-.category:hover { transform: scale(1.01); }
+.category:hover { 
+  background: #789;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+}
 .category.dragging { opacity: 0.6; border: 2px dashed var(--accent); }
 .category.disabled { opacity: 0.5; }
-.category label { width: 110px; font-weight: 600; color: #ccc; transition: color 0.5s; }
-.category select { flex: 1; padding: 8px; margin-right: 8px; min-width: 180px; font-size: 1em; border-radius: 6px; border: 1px solid #444; background: #1b1b1b; color: #f5f5f5; transition: all 0.3s ease; }
+.category.drag-over { border-top: 3px solid var(--accent); }
+.category label { 
+  width: 110px; 
+  font-weight: 600; 
+  color: #ccc; 
+  transition: color 0.5s;
+  user-select: none;
+}
+.category select { 
+  flex: 1; 
+  padding: 8px; 
+  margin-right: 8px; 
+  min-width: 180px; 
+  font-size: 1em; 
+  border-radius: 6px; 
+  border: 1px solid #444; 
+  background: #1b1b1b; 
+  color: #f5f5f5; 
+  transition: all 0.3s ease; 
+}
 .category select:focus { border-color: var(--accent); outline: none; }
-.category button { padding: 8px 14px; margin-right: 6px; margin-top: 4px; font-size: 0.95em; border-radius: 6px; cursor: pointer; border: none; color: #fff; background: var(--accent); transition: all 0.3s ease; }
-.category button:hover { background: var(--accent-light); transform: translateY(-1px); }
+.category button { 
+  padding: 8px 14px; 
+  margin-right: 6px; 
+  margin-top: 4px; 
+  font-size: 0.95em; 
+  border-radius: 6px; 
+  cursor: pointer; 
+  border: none; 
+  color: #fff; 
+  background: var(--accent); 
+  transition: all 0.3s ease;
+  touch-action: manipulation;
+  min-width: 80px;
+}
+.category button:hover:not(:disabled) { 
+  background: var(--accent-light); 
+  transform: none;
+}
 .category button:active { transform: scale(0.97); }
-header button { padding: 10px 24px; font-size: 1.1em; border-radius: 8px; cursor: pointer; background: var(--accent); color: #fff; border: none; transition: all 0.3s ease; }
-header button:hover { background: var(--accent-light); }
+.category button:disabled { opacity: 0.5; cursor: not-allowed; }
+header button { 
+  padding: 10px 24px; 
+  font-size: 1.1em; 
+  border-radius: 8px; 
+  cursor: pointer; 
+  background: var(--accent); 
+  color: #fff; 
+  border: none; 
+  transition: all 0.3s ease;
+  touch-action: manipulation;
+}
+header button:hover:not(:disabled) { background: var(--accent-light); }
 header button:active { transform: scale(0.97); }
-#volumeRange { vertical-align: middle; width: 160px; margin-left: 10px; accent-color: var(--accent); cursor: pointer; }
+header button:disabled { opacity: 0.5; cursor: not-allowed; }
+#volumeRange { 
+  vertical-align: middle; 
+  width: 160px; 
+  margin-left: 10px; 
+  accent-color: var(--accent); 
+  cursor: pointer; 
+}
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.loading-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+.loading-spinner {
+  border: 4px solid rgba(255,255,255,0.1);
+  border-top: 4px solid var(--accent);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.error-message {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #d32f2f;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 2000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.error-message.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+.duration-display {
+  font-size: 0.85em;
+  color: #888;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.total-duration {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 0.9em;
+  color: #888;
+  background: #1b1b1b;
+  padding: 4px 12px;
+  border-radius: 6px;
+}
+.playing-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background: #4caf50;
+  border-radius: 50%;
+  margin-left: 8px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.keyboard-hint {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(42, 42, 42, 0.9);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85em;
+  color: #888;
+  z-index: 100;
+}
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-@media (max-width: 600px) { .category { flex-direction: column; align-items: flex-start; } .category label { margin-bottom: 6px; } footer { flex-direction: column; gap: 8px; } }
+@media (max-width: 600px) { 
+  .category { flex-direction: column; align-items: flex-start; } 
+  .category label { margin-bottom: 6px; width: 100%; }
+  .category select { width: 100%; margin-bottom: 8px; }
+  .category button { width: calc(50% - 3px); }
+  .total-duration { position: static; margin-top: 8px; display: block; }
+  .keyboard-hint { display: none; }
+}
 @media (prefers-color-scheme: light) {
   body { background: #f5f5f5; color: #121212; }
-  header, footer { background: #e0e0e0; color: #121212; }
+  header { background: #e0e0e0; color: #121212; }
   .category { background: #e0e0e0; color: #121212; }
   .category label { color: #555; }
-  .category select { background: #fff; color: #121212; }
+  .category select { background: #fff; color: #121212; border-color: #ccc; }
+  .total-duration, .keyboard-hint { background: #fff; }
 }
 </style>
 </head>
 <body>
-<header><h1>FRBB DAB+ Jingles</h1>
+<header>
+  <h1>FRBB DAB+ Jingles</h1>
   <button id="playBtn">▶ Abspielen</button>
   <button id="stopBtn">⏹ Stop</button>
   <label for="volumeRange"></label>
   <input id="volumeRange" type="range" min="0" max="1" step="0.01" value="1">
+  <span class="total-duration" id="totalDuration">Gesamtdauer: --:--</span>
   <audio id="audioPlayer"></audio>
   <audio id="soundbettPlayer"></audio>
-
 </header>
 <main id="categories"></main>
 
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+</div>
+
+<div class="error-message" id="errorMessage"></div>
+
+<div class="keyboard-hint">
+  Shortcuts: Space = Play/Pause | Esc = Stop
+</div>
+
 <script>
-const defaultCategories = ['uhr','sender','studio','frequenz','sendereihe','spruch','soundbett'];
-let status = {};
+// ==================== KONSTANTEN & GLOBALE VARIABLEN ====================
+const DEFAULT_CATEGORIES = ['uhr', 'sender', 'studio', 'frequenz', 'sendereihe', 'spruch'];
+const FIXED_CATEGORY = 'soundbett';
+let categoryStatus = {};
 let selectedProfile = null;
+let profileData = null;
+let isPlaying = false;
+let audioDurations = new Map();
 
-window.addEventListener('load', loadContent);
-document.getElementById('playBtn').addEventListener('click', playAudio);
-document.getElementById('stopBtn').addEventListener('click', stopAudio);
+// ==================== UI UTILITIES ====================
+const UIUtils = {
+  showLoading() {
+    document.getElementById('loadingOverlay').classList.add('visible');
+  },
+  
+  hideLoading() {
+    document.getElementById('loadingOverlay').classList.remove('visible');
+  },
+  
+  showError(message, duration = 3000) {
+    const errorEl = document.getElementById('errorMessage');
+    errorEl.textContent = message;
+    errorEl.classList.add('visible');
+    setTimeout(() => {
+      errorEl.classList.remove('visible');
+    }, duration);
+  },
+  
+  formatDuration(seconds) {
+    if (!seconds || isNaN(seconds)) return '--:--';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  },
+  
+  updateTotalDuration() {
+    let total = 0;
+    document.querySelectorAll('.category').forEach(div => {
+      const select = div.querySelector('select');
+      if (!select || categoryStatus[select.id] === 'aus') return;
+      
+      const file = AudioPlayer.chooseFile(select.id);
+      if (!file) return;
+      
+      const key = `${selectedProfile}/${select.id}/${file}`;
+      if (audioDurations.has(key)) {
+        total += audioDurations.get(key);
+      }
+    });
+    
+    document.getElementById('totalDuration').textContent = 
+      `Gesamtdauer: ${UIUtils.formatDuration(total)}`;
+  }
+};
 
-async function loadContent() {
+// ==================== STORAGE MANAGEMENT ====================
+const Storage = {
+  getProfileSelection() {
+    return localStorage.getItem('selectedProfile');
+  },
+  
+  setProfileSelection(profile) {
+    localStorage.setItem('selectedProfile', profile);
+  },
+  
+  getCategoryStatus(profile) {
+    const allStatuses = JSON.parse(localStorage.getItem('categoryStatus')) || {};
+    return allStatuses[profile] || {};
+  },
+  
+  setCategoryStatus(profile, status) {
+    const allStatuses = JSON.parse(localStorage.getItem('categoryStatus')) || {};
+    allStatuses[profile] = status;
+    localStorage.setItem('categoryStatus', JSON.stringify(allStatuses));
+  },
+  
+  getCategorySelections(profile) {
+    const allSelections = JSON.parse(localStorage.getItem('categorySelections')) || {};
+    return allSelections[profile] || {};
+  },
+  
+  setCategorySelection(profile, category, value) {
+    const allSelections = JSON.parse(localStorage.getItem('categorySelections')) || {};
+    allSelections[profile] = allSelections[profile] || {};
+    allSelections[profile][category] = value;
+    localStorage.setItem('categorySelections', JSON.stringify(allSelections));
+  },
+  
+  getCategoryOrder() {
+    return JSON.parse(localStorage.getItem('categoryOrder')) || DEFAULT_CATEGORIES;
+  },
+  
+  setCategoryOrder(order) {
+    localStorage.setItem('categoryOrder', JSON.stringify(order));
+  }
+};
+
+// ==================== DATA LOADING ====================
+async function loadProfileData() {
+  UIUtils.showLoading();
   try {
-    const res = await fetch('content.cgi');
-    if (!res.ok) throw new Error('Fehler beim Laden');
-    const data = await res.json();
-    const profiles = Object.keys(data);
-    const savedProfile = localStorage.getItem('selectedProfile') || profiles[0];
-    selectedProfile = savedProfile;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    
+    const res = await fetch('content.cgi', { 
+      signal: controller.signal 
+    });
+    clearTimeout(timeout);
+    
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch(e) {
+    console.error('Ladefehler:', e);
+    if (e.name === 'AbortError') {
+      UIUtils.showError('Zeitüberschreitung beim Laden. Bitte erneut versuchen.');
+    } else {
+      UIUtils.showError('Verbindungsfehler. Bitte Seite neu laden.');
+    }
+    return null;
+  } finally {
+    UIUtils.hideLoading();
+  }
+}
 
-    const container = document.getElementById('categories');
-    container.innerHTML = '';
+async function getAudioDuration(url) {
+  return new Promise((resolve) => {
+    const audio = new Audio(url);
+    audio.addEventListener('loadedmetadata', () => {
+      resolve(audio.duration);
+    });
+    audio.addEventListener('error', () => {
+      resolve(0);
+    });
+  });
+}
 
-    // Profil-Auswahl
-    const profileDiv = document.createElement('div');
-    profileDiv.className = 'category';
-    profileDiv.dataset.cat = 'profile';
+// ==================== UI CREATION ====================
+const UI = {
+  createProfileSelector(profiles, currentProfile, data) {
+    const div = document.createElement('div');
+    div.className = 'category';
+    div.dataset.cat = 'profile';
+    
     const label = document.createElement('label');
     label.textContent = 'Profil:';
+    
     const select = document.createElement('select');
     profiles.forEach(p => {
       const opt = document.createElement('option');
@@ -107,301 +406,595 @@ async function loadContent() {
       opt.textContent = p;
       select.appendChild(opt);
     });
-    select.value = selectedProfile;
+    select.value = currentProfile;
+    
     select.addEventListener('change', () => {
       selectedProfile = select.value;
-      localStorage.setItem('selectedProfile', selectedProfile);
-      loadCategories(selectedProfile, data[selectedProfile]);
+      Storage.setProfileSelection(selectedProfile);
+      renderCategories(selectedProfile, data[selectedProfile]);
     });
-    profileDiv.appendChild(label);
-    profileDiv.appendChild(select);
-    container.appendChild(profileDiv);
-
-    loadCategories(selectedProfile, data[selectedProfile]);
-  } catch(e){ console.error(e); alert('Konnte content.cgi nicht laden'); }
-}
-
-function loadCategories(profileName, profilData){
-  const container = document.getElementById('categories');
-
-  // Status und Auswahl pro Profil laden
-  const allStatuses = JSON.parse(localStorage.getItem('categoryStatus')) || {};
-  const savedStatus = allStatuses[profileName] || {};
-  const allSelections = JSON.parse(localStorage.getItem('categorySelections')) || {};
-  const savedSelections = allSelections[profileName] || {};
-  const savedOrder = JSON.parse(localStorage.getItem('categoryOrder')) || defaultCategories;
-
-  container.querySelectorAll('.category').forEach(div=>{
-    if(div.dataset.cat !== 'profile') div.remove();
-  });
-
-  const categories = savedOrder.filter(c => defaultCategories.includes(c));
-  categories.forEach(cat=>{
-    const files = profilData[cat] || [];
-    status[cat] = savedStatus[cat] || 'on';
-
-    const div = document.createElement('div');
-    div.className = 'category';
-    div.setAttribute('draggable','true');
-    div.dataset.cat = cat;
-
-    const label = createLabel(cat);
-    const select = createSelect(cat, files);
-
-    if(savedSelections[cat]) select.value = savedSelections[cat];
-
-    if(files.length === 0){
-      status[cat] = 'aus';
-      disableCategory(div);
-    }
-
-    if(['spruch','soundbett'].includes(cat) && files.length>0 && status[cat]!=='zufall'){
-      const opts = [...select.options].map(o=>o.value);
-      select.value = opts[Math.floor(Math.random()*opts.length)];
-    }
-
-    if(['sender','frequenz','studio','sendereihe'].includes(cat)){
-      select.addEventListener('change', ()=>saveCategorySelection(cat, select.value));
-    }
-
-    const toggleBtn = createToggleButton(div, cat, select);
-    const previewBtn = createPreviewButton(cat, select);
-
+    
     div.appendChild(label);
     div.appendChild(select);
-    div.appendChild(toggleBtn);
-    div.appendChild(previewBtn);
+    return div;
+  },
+  
+  createCategoryDiv(category, files, savedSelection, isFixed = false) {
+    const div = document.createElement('div');
+    div.className = 'category';
+    if (!isFixed) {
+      div.setAttribute('draggable', 'true');
+    }
+    div.dataset.cat = category;
+    
+    const label = document.createElement('label');
+    label.textContent = category + ':';
+    
+    const select = UI.createFileSelect(category, files);
+    
+    // Auto-Randomisierung für spruch und soundbett beim Laden
+    if (['spruch', 'soundbett'].includes(category) && files.length > 0) {
+      const opts = [...select.options].map(o => o.value);
+      select.value = opts[Math.floor(Math.random() * opts.length)];
+    } else if (savedSelection) {
+      select.value = savedSelection;
+    }
+    
+    // Speichere Auswahl für alle Kategorien
+    select.addEventListener('change', () => {
+      Storage.setCategorySelection(selectedProfile, category, select.value);
+      UI.updateCategoryDuration(div, category, select.value);
+      UIUtils.updateTotalDuration();
+    });
+    
+    div.appendChild(label);
+    div.appendChild(select);
+    div.appendChild(UI.createToggleButton(div, category));
+    div.appendChild(UI.createPreviewButton(category));
+    
+    if (category === 'uhr' && files.length > 0) {
+      div.appendChild(UI.createNowButton(select));
+    } else if (files.length > 0) {
+      div.appendChild(UI.createRandomButton(category, select));
+    }
+    
+    const durationSpan = document.createElement('span');
+    durationSpan.className = 'duration-display';
+    durationSpan.textContent = '--:--';
+    div.appendChild(durationSpan);
+    
+    // Lade Duration
+    if (select.value) {
+      UI.updateCategoryDuration(div, category, select.value);
+    }
+    
+    return div;
+  },
+  
+  async updateCategoryDuration(div, category, file) {
+    const durationSpan = div.querySelector('.duration-display');
+    if (!durationSpan || !file) return;
+    
+    const key = `${selectedProfile}/${category}/${file}`;
+    
+    if (!audioDurations.has(key)) {
+      const url = `profile/${selectedProfile}/${category}/${file}`;
+      const duration = await getAudioDuration(url);
+      audioDurations.set(key, duration);
+    }
+    
+    durationSpan.textContent = UIUtils.formatDuration(audioDurations.get(key));
+    UIUtils.updateTotalDuration();
+  },
+  
+  createFileSelect(category, files) {
+    const select = document.createElement('select');
+    select.id = category;
+    
+    files.forEach(f => {
+      const opt = document.createElement('option');
+      opt.value = f;
+      opt.textContent = f;
+      select.appendChild(opt);
+    });
+    
+    if (category === 'uhr') {
+      const hourFile = TimeUtils.getCurrentHourFile([...select.options].map(o => o.value));
+      if (hourFile) select.value = hourFile;
+    }
+    
+    return select;
+  },
+  
+  createToggleButton(div, category) {
+    const btn = document.createElement('button');
+    btn.textContent = (categoryStatus[category] === 'aus') ? 'Aus' : 'An';
+    btn.onclick = () => {
+      if (categoryStatus[category] === 'aus') {
+        categoryStatus[category] = 'on';
+        btn.textContent = 'An';
+        CategoryState.enable(div);
+      } else {
+        categoryStatus[category] = 'aus';
+        btn.textContent = 'Aus';
+        CategoryState.disable(div);
+      }
+      Storage.setCategoryStatus(selectedProfile, categoryStatus);
+      UIUtils.updateTotalDuration();
+    };
+    return btn;
+  },
+  
+  createPreviewButton(category) {
+    const btn = document.createElement('button');
+    btn.textContent = '▶';
+    btn.title = 'Vorhören';
+    btn.onclick = () => {
+      const file = AudioPlayer.chooseFile(category);
+      if (!file) return;
+      AudioPlayer.preview(`profile/${selectedProfile}/${category}/${file}`);
+    };
+    return btn;
+  },
+  
+  createRandomButton(category, select) {
+    const btn = document.createElement('button');
+    btn.textContent = 'Zufall';
+    btn.onclick = () => {
+      const opts = [...select.options].map(o => o.value);
+      if (opts.length > 0) {
+        select.value = opts[Math.floor(Math.random() * opts.length)];
+        Storage.setCategorySelection(selectedProfile, category, select.value);
+        
+        // Update duration display
+        const div = select.closest('.category');
+        UI.updateCategoryDuration(div, category, select.value);
+        UIUtils.updateTotalDuration();
+      }
+    };
+    return btn;
+  },
+  
+  createNowButton(select) {
+    const btn = document.createElement('button');
+    btn.textContent = 'Jetzt';
+    btn.onclick = () => {
+      const opts = [...select.options].map(o => o.value);
+      const file = TimeUtils.getCurrentHourFile(opts);
+      if (file) select.value = file;
+      else UIUtils.showError('Keine Datei für aktuelle Stunde.');
+    };
+    return btn;
+  }
+};
 
-    if(cat==='uhr' && files.length>0) div.appendChild(createNowButton(select));
-    else if(files.length>0) div.appendChild(createZufallButton(cat, select));
+// ==================== CATEGORY STATE MANAGEMENT ====================
+const CategoryState = {
+  disable(div) {
+    div.classList.add('disabled');
+    const toggleBtn = div.querySelector('button');
+    div.querySelectorAll('select, button').forEach(el => {
+      if (el !== toggleBtn) el.disabled = true;
+    });
+  },
+  
+  enable(div) {
+    div.classList.remove('disabled');
+    const toggleBtn = div.querySelector('button');
+    div.querySelectorAll('select, button').forEach(el => {
+      if (el !== toggleBtn) el.disabled = false;
+    });
+  }
+};
 
-    // Status beim Laden anwenden
-    if(status[cat]==='aus') disableCategory(div);
-    else enableCategory(div);
+// ==================== DRAG AND DROP (with Touch Support) ====================
+const DragDrop = {
+  enable(container) {
+    let dragged = null;
+    let touchStartY = 0;
+    let touchElement = null;
+    
+    container.querySelectorAll('.category').forEach(div => {
+      if (div.dataset.cat === 'profile' || div.dataset.cat === 'soundbett') return;
+      
+      // Mouse events
+      div.addEventListener('dragstart', e => {
+        dragged = div;
+        div.classList.add('dragging');
+      });
+      
+      div.addEventListener('dragend', e => {
+        div.classList.remove('dragging');
+        container.querySelectorAll('.category').forEach(d => d.classList.remove('drag-over'));
+        dragged = null;
+        Storage.setCategoryOrder(DragDrop.getCurrentOrder(container));
+      });
+      
+      div.addEventListener('dragover', e => {
+        e.preventDefault();
+        const after = DragDrop.getElementAfter(container, e.clientY);
+        if (after == null) container.appendChild(dragged);
+        else container.insertBefore(dragged, after);
+      });
+      
+      // Touch events
+      div.addEventListener('touchstart', e => {
+        if (e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') return;
+        touchStartY = e.touches[0].clientY;
+        touchElement = div;
+        div.classList.add('dragging');
+      }, { passive: true });
+      
+      div.addEventListener('touchmove', e => {
+        if (!touchElement) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const after = DragDrop.getElementAfter(container, touch.clientY);
+        if (after == null) container.appendChild(touchElement);
+        else container.insertBefore(touchElement, after);
+      });
+      
+      div.addEventListener('touchend', e => {
+        if (!touchElement) return;
+        touchElement.classList.remove('dragging');
+        container.querySelectorAll('.category').forEach(d => d.classList.remove('drag-over'));
+        touchElement = null;
+        Storage.setCategoryOrder(DragDrop.getCurrentOrder(container));
+      });
+    });
+  },
+  
+  getElementAfter(container, y) {
+    const draggableElements = [...container.querySelectorAll('.category:not(.dragging)')];
+    return draggableElements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+      }
+      return closest;
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  },
+  
+  getCurrentOrder(container) {
+    return [...container.querySelectorAll('.category')]
+      .map(d => d.dataset.cat)
+      .filter(c => c !== 'profile' && c !== 'soundbett');
+  }
+};
 
+// ==================== TIME UTILITIES ====================
+const TimeUtils = {
+  getCurrentHourFile(options) {
+    const h = (new Date()).getHours();
+    const hourStr = (h < 10 ? '0' + h : h) + '-00.wav';
+    return options.includes(hourStr) ? hourStr : null;
+  }
+};
+
+// ==================== AUDIO PLAYER ====================
+const AudioPlayer = {
+  handleError() {
+    // Nur Fehler anzeigen wenn tatsächlich abgespielt wird
+    if (isPlaying) {
+      UIUtils.showError('Fehler beim Laden der Audio-Datei');
+      AudioPlayer.stop();
+    }
+  },
+  
+  preview(src) {
+    let previewAudio = document.getElementById('audioPreview');
+    if (!previewAudio) {
+      previewAudio = document.createElement('audio');
+      previewAudio.id = 'audioPreview';
+      previewAudio.style.display = 'none';
+      document.body.appendChild(previewAudio);
+    }
+    
+    previewAudio.src = src;
+    previewAudio.volume = parseFloat(document.getElementById('volumeRange').value);
+    
+    previewAudio.addEventListener('error', () => {
+      UIUtils.showError('Audio konnte nicht geladen werden');
+    }, { once: true });
+    
+    previewAudio.play().catch(err => {
+      UIUtils.showError('Wiedergabe fehlgeschlagen');
+    });
+  },
+  
+  chooseFile(category) {
+    const select = document.getElementById(category);
+    if (!select) return null;
+    if (categoryStatus[category] === 'aus') return null;
+    
+    return select.value;
+  },
+  
+  play() {
+    if (isPlaying) {
+      console.log('Bereits am Abspielen');
+      return;
+    }
+    
+    const sequence = [];
+    let soundbettFile = null;
+    
+    document.querySelectorAll('.category').forEach(div => {
+      const select = div.querySelector('select');
+      if (!select || categoryStatus[select.id] === 'aus') return;
+      
+      const file = AudioPlayer.chooseFile(select.id);
+      if (!file) return;
+      
+      const path = `profile/${selectedProfile}/${select.id}/${file}`;
+      
+      if (select.id === 'soundbett') {
+        soundbettFile = path;
+      } else {
+        sequence.push(path);
+      }
+    });
+    
+    if (sequence.length === 0 && !soundbettFile) {
+      UIUtils.showError('Keine Dateien zum Abspielen ausgewählt');
+      return;
+    }
+    
+    isPlaying = true;
+    const playBtn = document.getElementById('playBtn');
+    playBtn.disabled = true;
+    playBtn.innerHTML = '▶ Spielt ab <span class="playing-indicator"></span>';
+    
+    const audio = document.getElementById('audioPlayer');
+    const sb = document.getElementById('soundbettPlayer');
+    const vol = parseFloat(document.getElementById('volumeRange').value);
+    
+    audio.volume = vol;
+    sb.volume = vol * 0.1;
+    
+    // Error handling für Audio - verwende benannte Funktion für einfacheres Entfernen
+    audio.addEventListener('error', AudioPlayer.handleError, { once: true });
+    
+    if (soundbettFile) {
+      sb.src = soundbettFile;
+      sb.loop = false;
+      sb.play().catch(err => {
+        console.error('Soundbett Fehler:', err);
+      });
+    } else {
+      sb.pause();
+      sb.src = '';
+    }
+    
+    if (sequence.length === 0) return;
+    
+    let idx = 0;
+    audio.src = sequence[idx];
+    audio.play().catch(err => {
+      UIUtils.showError('Wiedergabe fehlgeschlagen');
+      AudioPlayer.stop();
+    });
+    
+    audio.onended = function() {
+      idx++;
+      if (idx < sequence.length) {
+        audio.src = sequence[idx];
+        audio.play().catch(err => {
+          UIUtils.showError('Wiedergabe fehlgeschlagen');
+          AudioPlayer.stop();
+        });
+      } else {
+        // Alle Dateien fertig gespielt, jetzt Soundbett ausblenden
+        if (soundbettFile) {
+          AudioPlayer.fadeOutSoundbett(sb, vol);
+        }
+        audio.onended = null;
+        isPlaying = false;
+        playBtn.disabled = false;
+        playBtn.textContent = '▶ Abspielen';
+      }
+    };
+  },
+  
+  fadeOutSoundbett(sb, originalVol) {
+    const fadeSteps = 50;
+    const fadeInterval = 100;
+    let step = 0;
+    
+    const fadeOut = setInterval(() => {
+      step++;
+      const progress = step / fadeSteps;
+      const newVolume = (originalVol * 0.1) * (1 - progress);
+      
+      if (newVolume > 0.001) {
+        sb.volume = newVolume;
+      } else {
+        clearInterval(fadeOut);
+        sb.pause();
+        sb.src = '';
+        sb.volume = originalVol * 0.1;
+      }
+    }, fadeInterval);
+  },
+  
+  stop() {
+    const audio = document.getElementById('audioPlayer');
+    const sb = document.getElementById('soundbettPlayer');
+    const previewAudio = document.getElementById('audioPreview');
+    
+    // Entferne Event Listener bevor wir stoppen
+    audio.removeEventListener('error', AudioPlayer.handleError);
+    audio.onended = null;
+    
+    // Stoppe Haupt-Audio
+    audio.pause();
+    audio.currentTime = 0;
+    audio.src = '';
+    
+    // Stoppe Soundbett
+    sb.pause();
+    sb.currentTime = 0;
+    sb.src = '';
+    
+    // Stoppe Preview falls vorhanden
+    if (previewAudio) {
+      previewAudio.pause();
+      previewAudio.currentTime = 0;
+      previewAudio.src = '';
+    }
+    
+    isPlaying = false;
+    const playBtn = document.getElementById('playBtn');
+    playBtn.disabled = false;
+    playBtn.textContent = '▶ Abspielen';
+  }
+};
+
+// ==================== KEYBOARD SHORTCUTS ====================
+function setupKeyboardShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    // Ignoriere Shortcuts wenn in Input-Feldern
+    if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+    
+    if (e.code === 'Space') {
+      e.preventDefault();
+      if (isPlaying) {
+        AudioPlayer.stop();
+      } else {
+        AudioPlayer.play();
+      }
+    }
+    
+    if (e.code === 'Escape') {
+      e.preventDefault();
+      AudioPlayer.stop();
+    }
+  });
+}
+
+// ==================== RENDERING ====================
+function renderCategories(profile, data) {
+  const container = document.getElementById('categories');
+  
+  // Lade gespeicherte Daten
+  const savedStatus = Storage.getCategoryStatus(profile);
+  const savedSelections = Storage.getCategorySelections(profile);
+  const savedOrder = Storage.getCategoryOrder();
+  
+  // Entferne alte Kategorien (außer Profil-Selektor)
+  container.querySelectorAll('.category').forEach(div => {
+    if (div.dataset.cat !== 'profile') div.remove();
+  });
+  
+  // Erstelle Soundbett-Kategorie direkt nach Profil (fixiert)
+  if (data[FIXED_CATEGORY]) {
+    const files = data[FIXED_CATEGORY] || [];
+    categoryStatus[FIXED_CATEGORY] = savedStatus[FIXED_CATEGORY] || 'on';
+    
+    const div = UI.createCategoryDiv(FIXED_CATEGORY, files, savedSelections[FIXED_CATEGORY], true);
+    
+    if (files.length === 0) {
+      categoryStatus[FIXED_CATEGORY] = 'aus';
+      CategoryState.disable(div);
+    } else if (categoryStatus[FIXED_CATEGORY] === 'aus') {
+      CategoryState.disable(div);
+    } else {
+      CategoryState.enable(div);
+    }
+    
+    container.appendChild(div);
+  }
+  
+  // Erstelle verschiebbare Kategorien in gespeicherter Reihenfolge
+  const categories = savedOrder.filter(c => DEFAULT_CATEGORIES.includes(c));
+  
+  categories.forEach(cat => {
+    const files = data[cat] || [];
+    categoryStatus[cat] = savedStatus[cat] || 'on';
+    
+    const div = UI.createCategoryDiv(cat, files, savedSelections[cat], false);
+    
+    // Deaktiviere Kategorie wenn keine Dateien vorhanden
+    if (files.length === 0) {
+      categoryStatus[cat] = 'aus';
+      CategoryState.disable(div);
+    } else if (categoryStatus[cat] === 'aus') {
+      CategoryState.disable(div);
+    } else {
+      CategoryState.enable(div);
+    }
+    
     container.appendChild(div);
   });
-
-  enableDragAndDrop(container);
+  
+  DragDrop.enable(container);
+  UIUtils.updateTotalDuration();
 }
 
-function disableCategory(div){
-  div.classList.add('disabled');
-  const toggleBtn = div.querySelector('button');
-  div.querySelectorAll('select, button').forEach(el=>{
-    if(el !== toggleBtn) el.disabled = true;
+async function initialize() {
+  const data = await loadProfileData();
+  if (!data) return;
+  
+  profileData = data;
+  const profiles = Object.keys(data);
+  const savedProfile = Storage.getProfileSelection() || profiles[0];
+  selectedProfile = savedProfile;
+  
+  const container = document.getElementById('categories');
+  container.innerHTML = '';
+  
+  // Erstelle Profil-Selektor
+  const profileSelector = UI.createProfileSelector(profiles, selectedProfile, data);
+  container.appendChild(profileSelector);
+  
+  // Lade Kategorien für ausgewähltes Profil
+  renderCategories(selectedProfile, data[selectedProfile]);
+}
+
+// ==================== EVENT LISTENERS ====================
+function setupEventListeners() {
+  document.getElementById('playBtn').addEventListener('click', AudioPlayer.play);
+  document.getElementById('stopBtn').addEventListener('click', AudioPlayer.stop);
+  
+  const volumeRange = document.getElementById('volumeRange');
+  const audioPlayer = document.getElementById('audioPlayer');
+  const soundbettPlayer = document.getElementById('soundbettPlayer');
+  
+  volumeRange.addEventListener('input', () => {
+    const vol = parseFloat(volumeRange.value);
+    audioPlayer.volume = vol;
+    soundbettPlayer.volume = vol * 0.1;
   });
+  
+  setupKeyboardShortcuts();
 }
-function enableCategory(div){
-  div.classList.remove('disabled');
-  const toggleBtn = div.querySelector('button');
-  div.querySelectorAll('select, button').forEach(el=>{
-    if(el !== toggleBtn) el.disabled = false;
-  });
-}
-function enableDragAndDrop(container){
-  let dragged = null;
-  container.querySelectorAll('.category').forEach(div=>{
-    if(div.dataset.cat === 'profile') return;
-    div.addEventListener('dragstart', e=>{ dragged=div; div.classList.add('dragging'); });
-    div.addEventListener('dragend', e=>{ div.classList.remove('dragging'); dragged=null; saveCategoryOrder(container); });
-    div.addEventListener('dragover', e=>{
-      e.preventDefault();
-      const after = getDragAfterElement(container, e.clientY);
-      if(after==null) container.appendChild(dragged);
-      else container.insertBefore(dragged, after);
-    });
-  });
-}
-function getDragAfterElement(container, y){
-  const draggableElements=[...container.querySelectorAll('.category:not(.dragging)')];
-  return draggableElements.reduce((closest,child)=>{
-    const box = child.getBoundingClientRect();
-    const offset = y - box.top - box.height/2;
-    if(offset<0 && offset>closest.offset) return {offset:offset, element:child};
-    else return closest;
-  }, {offset: Number.NEGATIVE_INFINITY}).element;
-}
-function saveCategoryOrder(container){
-  const order = [...container.querySelectorAll('.category')].map(d=>d.dataset.cat).filter(c => c !== 'profile');
-  localStorage.setItem('categoryOrder', JSON.stringify(order));
-}
-function createLabel(cat){ const l=document.createElement('label'); l.textContent=cat+':' ; return l; }
-function createSelect(cat,files){
-  const s=document.createElement('select'); s.id=cat;
-  files.forEach(f=>{ const o=document.createElement('option'); o.value=f; o.textContent=f; s.appendChild(o); });
-  if(cat==='uhr'){ const f=getCurrentHourFile([...s.options].map(o=>o.value)); if(f) s.value=f; }
-  return s;
-}
-function createToggleButton(div, cat, select){
-  const b = document.createElement('button');
-  b.textContent = (status[cat]==='aus') ? 'Aus' : 'An';
-  b.onclick = ()=>{
-    if(status[cat]==='on' || status[cat]==='zufall'){ 
-      status[cat]='aus'; 
-      b.textContent='Aus'; 
-      disableCategory(div); 
-    } else { 
-      status[cat]='on'; 
-      b.textContent='An'; 
-      enableCategory(div); 
-    }
-    saveCategoryStatus();
-  };
-  return b;
-}
-function createPreviewButton(cat, select) {
-  const b = document.createElement('button');
-  b.textContent = '▶';
-  b.title = 'Vorhören';
-  b.onclick = () => {
-    const file = chooseFile(cat);
-    if (!file) return;
-    const previewAudio = document.getElementById('audioPreview') || (() => {
-      const a = document.createElement('audio');
-      a.id = 'audioPreview';
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      return a;
-    })();
-    previewAudio.src = `profile/${selectedProfile}/${cat}/${file}`;
-    previewAudio.volume = parseFloat(document.getElementById('volumeRange').value);
-    previewAudio.play();
-  };
-  return b;
-}
-function createZufallButton(cat, select){ 
-  const b=document.createElement('button'); 
-  b.textContent='Zufall'; 
-  b.onclick=()=>{
-    status[cat]='zufall'; 
-    select.disabled=false; 
-    const opts=[...select.options].map(o=>o.value); 
-    if(opts.length>0) select.value=opts[Math.floor(Math.random()*opts.length)]; 
-    saveCategoryStatus(); 
-  }; 
-  return b; 
-}
-function createNowButton(select){ 
-  const b=document.createElement('button'); 
-  b.textContent='Jetzt'; 
-  b.onclick=()=>{
-    const opts=[...select.options].map(o=>o.value); 
-    const f=getCurrentHourFile(opts); 
-    if(f) select.value=f; 
-    else alert('Keine Datei für aktuelle Stunde.'); 
-  }; 
-  return b; 
-}
-function getCurrentHourFile(opts){ 
-  const h=(new Date()).getHours(); 
-  const hs=(h<10?'0'+h:h)+'-00.wav'; 
-  return opts.includes(hs)?hs:null; 
-}
-function saveCategoryStatus(){ 
-  const allStatuses = JSON.parse(localStorage.getItem('categoryStatus')) || {};
-  allStatuses[selectedProfile] = status;
-  localStorage.setItem('categoryStatus', JSON.stringify(allStatuses));
-}
-function saveCategorySelection(cat,value){ 
-  const allSelections = JSON.parse(localStorage.getItem('categorySelections')) || {};
-  allSelections[selectedProfile] = allSelections[selectedProfile] || {};
-  allSelections[selectedProfile][cat] = value;
-  localStorage.setItem('categorySelections', JSON.stringify(allSelections));
-}
-function chooseFile(id){
-  const s = document.getElementById(id);
-  if(!s) return null;
-  if(status[id]==='aus') return null;
-  if(status[id]==='zufall'){
-    const opts=[...s.options].map(o=>o.value);
-    if(opts.length===0) return null;
-    return opts[Math.floor(Math.random()*opts.length)];
-  }
-  return s.value;
-}
-function playAudio(){
-  const divs=document.querySelectorAll('.category');
-  let sequence=[], soundbettFile=null;
-  divs.forEach(div=>{
-    const sel = div.querySelector('select');
-    if(!sel) return;
-    if(status[sel.id]==='aus') return;
-    const file = chooseFile(sel.id);
-    if(!file) return;
 
-    if(sel.id==='soundbett') soundbettFile = 'profile/'+selectedProfile+'/soundbett/'+file;
-    else if(sel.id==='uhr') sequence.push('profile/'+selectedProfile+'/uhr/'+file);
-    else sequence.push('profile/'+selectedProfile+'/'+sel.id+'/'+file);
-  });
-
-  const audio=document.getElementById('audioPlayer');
-  const sb=document.getElementById('soundbettPlayer');
-  const vol=parseFloat(document.getElementById('volumeRange').value);
-  audio.volume=vol;
-  sb.volume=vol*0.1;
-
-  if(soundbettFile){ sb.src=soundbettFile; sb.loop=false; sb.play(); } 
-  else { sb.pause(); sb.src=''; }
-
-  if(sequence.length===0) return;
-
-  let idx=0;
-  audio.src=sequence[idx];
-  audio.play();
-  audio.onended=function(){
-    idx++;
-    if(idx<sequence.length){ audio.src=sequence[idx]; audio.play(); }
-    else{
-      const fadeOut = setInterval(()=>{
-        if(sb.volume>0.01) sb.volume-=0.01;
-        else{
-          clearInterval(fadeOut);
-          sb.pause();
-          sb.src='';
-          sb.volume=vol*0.1;
-        }
-      },100);
-      audio.onended=null;
-    }
-  };
-}
-function stopAudio(){ 
-  const audio=document.getElementById('audioPlayer'); 
-  const sb=document.getElementById('soundbettPlayer'); 
-  audio.pause(); audio.currentTime=0; audio.src=''; 
-  sb.pause(); sb.currentTime=0; sb.src=''; 
-  audio.onended=null; 
-}
-const volumeRange=document.getElementById('volumeRange'); 
-const audioPlayer=document.getElementById('audioPlayer'); 
-const soundbettPlayer=document.getElementById('soundbettPlayer');
-volumeRange.addEventListener('input',()=>{
-  const vol=parseFloat(volumeRange.value); 
-  audioPlayer.volume=vol; 
-  soundbettPlayer.volume=vol*0.1; 
+// ==================== INITIALIZATION ====================
+window.addEventListener('load', () => {
+  setupEventListeners();
+  initialize();
 });
 </script>
-
 <footer style="height:1%;">
 <h1>Anleitung für den Sendekennungs-Player</h1>
 
 <h2>Einleitung</h2>
-<p>Der Sendekennungs-Player kombiniert automatisch verschiedene Audio-Bausteine zu individuellen Jingles oder Senderkennungen. Jede_r Sendemacher_in kann dafür ein eigenes Profil anlegen (z. B. „milan“).</p>
+<p>Der Sendekennungs-Player kombiniert automatisch verschiedene Audio-Bausteine zu individuellen Jingles oder Senderkennungen. Jede_r Sendemacher_in kann dafür ein eigenes Profil anlegen (z. B. „default“).</p>
 
 <hr>
 
 <h2>Struktur</h2>
 <p>Jedes Profil liegt als eigener Ordner im Hauptverzeichnis, z. B.:</p>
-<pre><code>./milan/</code></pre>
+<pre><code>./default/</code></pre>
 <p>Innerhalb des Profils gibt es Unterordner für die verschiedenen Bausteine:</p>
-<pre><code>./milan/spruch/
-./milan/sender/
-./milan/frequenz/
-./milan/sendereihe/
-./milan/uhr/
-./milan/studio/
-./milan/soundbett/</code></pre>
+<pre><code>./default/spruch/
+./default/sender/
+./default/frequenz/
+./default/sendereihe/
+./default/uhr/
+./default/studio/
+./default/soundbett/</code></pre>
 
 <hr>
 
@@ -411,14 +1004,14 @@ volumeRange.addEventListener('input',()=>{
   <li>Dateiname = gesprochener Text, kleinbuchstaben, Bindestriche statt Leerzeichen</li>
 </ul>
 <p>Beispiele:</p>
-<pre><code>./milan/spruch/einfach-mal-abschalten.wav
-./milan/spruch/bitte-wenden.wav
-./milan/sender/frbb.wav
-./milan/frequenz/88.4.wav
-./milan/sendereihe/beatnikradio.wav
-./milan/uhr/18-00.wav
-./milan/studio/haus-der-statistik.wav
-./milan/soundbett/boogie.wav</code></pre>
+<pre><code>./default/spruch/einfach-mal-abschalten.wav
+./default/spruch/bitte-wenden.wav
+./default/sender/frbb.wav
+./default/frequenz/88.4.wav
+./default/sendereihe/beatnikradio.wav
+./default/uhr/18-00.wav
+./default/studio/haus-der-statistik.wav
+./default/soundbett/boogie.wav</code></pre>
 <p>Tipp: Sprecht die Wörter klar und einzeln ein – so kann das System flexibel kombinieren.</p>
 
 <hr>
@@ -485,8 +1078,8 @@ volumeRange.addEventListener('input',()=>{
 <h2>Zusammenfassung</h2>
 <ul>
   <li>Jede\*r kann ein Profil mit Sprachsamples anlegen</li>
-  <li>Dateinamen = gesprochener Inhalt, ohne Leerzeichen</li>
   <li>Unterordner nach Funktion strukturieren</li>
+  <li>Dateinamen = gesprochener Inhalt, ohne Leerzeichen</li>
   <li>Player mischt Elemente automatisch oder manuell</li>
 </ul>
 <p>So entsteht ein flexibles System, das automatisch passende Sendekennungen und Jingles aus euren eigenen Aufnahmen generiert.</p>
